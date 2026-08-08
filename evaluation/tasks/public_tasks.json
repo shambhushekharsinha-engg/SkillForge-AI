@@ -1,0 +1,14 @@
+[
+    {
+        "task_id": "sb-pub-001",
+        "description": "Create a script that reads all unread emails from the mock Gmail API, extracts action items using an LLM, and appends them to a daily note in the mock Google Docs API."
+    },
+    {
+        "task_id": "sb-pub-002",
+        "description": "Monitor a mock Slack channel for messages containing 'URGENT'. If found, create a high-priority event on the mock Google Calendar API for 30 minutes from the current time."
+    },
+    {
+        "task_id": "sb-pub-003",
+        "description": "Download all CSV files from a specific mock Google Drive folder, merge them into a single pandas DataFrame, clean null values, and upload the merged CSV back to Drive."
+    }
+]
