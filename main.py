@@ -7,6 +7,9 @@ from skillforge.critic import SkillCritic
 from skillforge.safety import SafetyAuditor
 from skillforge.refiner import SkillRefiner
 from skillforge.evaluator import ProxyEvaluator
+from skillforge.memory import SkillMemory
+from skillforge.versioning import VersionManager
+from skillforge.regression import RegressionProtector
 from skillforge.config import config
 
 def main():
@@ -31,6 +34,9 @@ def main():
     auditor = SafetyAuditor(llm)
     refiner = SkillRefiner(llm)
     evaluator = ProxyEvaluator()
+    memory = SkillMemory()
+    version_manager = VersionManager(memory)
+    regression_protector = RegressionProtector(memory)
 
     task_id = "test-task-001"
     task_desc = "Write a Python script to recursively find and delete all .tmp files in a directory."
@@ -60,6 +66,17 @@ def main():
     # eval_res = evaluator.evaluate(task_analysis, draft)
     # print(f"   [Evaluation complete. Lift: {eval_res.lift}]")
     
+    print("\n7. Memory, Versioning, and Regression Check...")
+    # skill_id = draft.name.lower().replace(" ", "_")
+    # version = version_manager.get_next_version(skill_id)
+    # is_regression, reg_msg = regression_protector.check_regression(eval_res, version)
+    # if not is_regression and eval_res.lift > config.MIN_LIFT_THRESHOLD:
+    #     memory.save_skill(skill_id, version, task_id, draft)
+    #     memory.save_evaluation(eval_res, version)
+    #     print(f"   [Skill v{version} saved successfully. {reg_msg}]")
+    # else:
+    #     print(f"   [Skill rejected. Reason: {reg_msg} or Lift too low]")
+        
     print("\nPipeline execution structure successful.")
 
 if __name__ == "__main__":
