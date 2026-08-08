@@ -6,6 +6,7 @@ from skillforge.generator import SkillGenerator
 from skillforge.critic import SkillCritic
 from skillforge.safety import SafetyAuditor
 from skillforge.refiner import SkillRefiner
+from skillforge.evaluator import ProxyEvaluator
 from skillforge.config import config
 
 def main():
@@ -29,6 +30,7 @@ def main():
     critic = SkillCritic(llm)
     auditor = SafetyAuditor(llm)
     refiner = SkillRefiner(llm)
+    evaluator = ProxyEvaluator()
 
     task_id = "test-task-001"
     task_desc = "Write a Python script to recursively find and delete all .tmp files in a directory."
@@ -53,6 +55,10 @@ def main():
     # if critic_res.should_refine or not safety_res.safe:
     #     draft = refiner.refine(task_analysis, draft, critic_res, safety_res)
     #     print("   [Refinement complete]")
+    
+    print("\n6. Proxy Evaluation (Lift Calculation)...")
+    # eval_res = evaluator.evaluate(task_analysis, draft)
+    # print(f"   [Evaluation complete. Lift: {eval_res.lift}]")
     
     print("\nPipeline execution structure successful.")
 
