@@ -11,9 +11,9 @@ class SkillCritic:
         prompt = f"""
         You are an expert AI agent skill critic. Your job is to strictly evaluate the following skill draft.
         Evaluate it on:
-        1. Capability: Does it actually solve the task? Are instructions actionable?
-        2. Reliability: Does it include verification? What happens when operations fail?
-        3. Generalization: Is it overfitted to one example?
+        1. Capability: Does it actually solve the task? Are instructions actionable and highly specific?
+        2. Reliability: Does it include verification? What happens when operations fail? You MUST penalize skills heavily if they do not explicitly handle edge cases (e.g., timezone differences, missing data, API rate limits).
+        3. Generalization: Is it overfitted to one example, or does it encode a robust, reusable workflow?
         
         Skill Draft:
         {skill_draft.model_dump_json(indent=2)}

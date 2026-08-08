@@ -10,7 +10,12 @@ class SkillGenerator:
     def generate(self, task_analysis: TaskAnalysis) -> SkillDraft:
         prompt = f"""
         You are an expert AI agent skill engineer. Draft a reusable skill for the following task analysis.
-        The goal is to create a general, reusable skill, not overfitted to this exact instance.
+        The goal is to create a general, reusable, and highly robust skill.
+        
+        CRITICAL REQUIREMENTS:
+        - Defensive Design: Explicitly include steps for data validation, timezone handling (if time is involved), and null checking.
+        - Robust Payloads: Specify the exact structure of expected API payloads.
+        - Fallbacks: Always include 'failure_handling' procedures if an API call or operation fails.
         
         Task Analysis:
         {task_analysis.model_dump_json(indent=2)}

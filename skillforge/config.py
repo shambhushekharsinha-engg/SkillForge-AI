@@ -8,7 +8,7 @@ load_dotenv()
 class Config:
     # LLM Settings
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
-    DEFAULT_MODEL: str = os.getenv("DEFAULT_MODEL", "gemini-2.5-pro")
+    DEFAULT_MODEL: str = os.getenv("DEFAULT_MODEL", "gemini-2.5-flash")
     
     # Model Parameters
     TEMPERATURE_GENERATION: float = 0.7

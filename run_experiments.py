@@ -1,5 +1,6 @@
 import json
 import os
+import time
 from pathlib import Path
 from skillforge.llm.gemini import GeminiLLM
 from skillforge.analyzer import TaskAnalyzer
@@ -37,7 +38,7 @@ def run_experiments():
     critic = SkillCritic(llm)
     auditor = SafetyAuditor(llm)
     refiner = SkillRefiner(llm)
-    evaluator = ProxyEvaluator()
+    evaluator = ProxyEvaluator(llm)
     memory = SkillMemory()
     version_manager = VersionManager(memory)
     regression_protector = RegressionProtector(memory)
@@ -49,29 +50,32 @@ def run_experiments():
         
         # We wrap in try-except in a real scenario, but here we just trace logic
         print("  -> Analyzing task...")
-        # task_analysis = analyzer.analyze(t['task_id'], t['description'])
+        task_analysis = analyzer.analyze(t['task_id'], t['description'])
         
         print("  -> Drafting skill...")
-        # draft = generator.generate(task_analysis)
+        draft = generator.generate(task_analysis)
         
         print("  -> Critiquing & Safety Check...")
-        # critic_res = critic.critique(draft)
-        # safety_res = auditor.audit(task_analysis, draft)
+        critic_res = critic.critique(draft)
+        safety_res = auditor.audit(task_analysis, draft)
         
         print("  -> Evaluating Lift...")
-        # eval_res = evaluator.evaluate(task_analysis, draft)
-        # print(f"     [Lift: {eval_res.lift:.2f}]")
+        eval_res = evaluator.evaluate(task_analysis, draft)
+        print(f"     [Lift: {eval_res.lift:.2f}]")
         
         print("  -> Committing to memory...")
-        # skill_id = draft.name.lower().replace(" ", "_")
-        # version = version_manager.get_next_version(skill_id)
-        # is_reg, msg = regression_protector.check_regression(eval_res, version)
-        # if not is_reg:
-        #     memory.save_skill(skill_id, version, t['task_id'], draft)
-        #     memory.save_evaluation(eval_res, version)
+        skill_id = draft.name.lower().replace(" ", "_")
+        version = version_manager.get_next_version(skill_id)
+        is_reg, msg = regression_protector.check_regression(eval_res, version)
+        if not is_reg:
+            memory.save_skill(skill_id, version, t['task_id'], draft)
+            memory.save_evaluation(eval_res, version)
         
         print("  -> Completed.")
         print()
+        
+        # Respect free-tier rate limits between tasks
+        time.sleep(5)
 
     print("Experiment run finished.")
 
