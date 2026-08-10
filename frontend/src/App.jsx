@@ -73,8 +73,8 @@ function App() {
           <div style={{ backgroundColor: '#2d3748', color: '#fff', padding: '12px 24px', borderRadius: '8px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
             <Loader2 className="spin" size={20} style={{ animation: 'spin 2s linear infinite' }} />
             <div>
-              <strong style={{ display: 'block', fontSize: '14px' }}>Connecting to Serverless Backend...</strong>
-              <span style={{ fontSize: '12px', opacity: 0.8 }}>We are using a free Render instance. It may take up to 50 seconds to wake up from sleep mode.</span>
+              <strong style={{ display: 'block', fontSize: '14px' }}>Waking up the backend...</strong>
+              <span style={{ fontSize: '12px', opacity: 0.8 }}>The demo backend is starting from an idle state. This can take up to about a minute.</span>
             </div>
           </div>
         )}

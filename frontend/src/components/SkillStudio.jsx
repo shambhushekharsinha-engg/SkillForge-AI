@@ -35,51 +35,58 @@ export default function SkillStudio() {
       wsRef.current.close();
     }
 
-    const ws = new WebSocket(`${WS_BASE_URL}/api/ws/generate`);
-    wsRef.current = ws;
+    let retries = 0;
+    const maxRetries = 5;
 
-    ws.onopen = () => {
-      ws.send(JSON.stringify({ task_id: `ui-task-${Date.now()}`, description: taskDesc }));
-    };
+    const connect = () => {
+      const ws = new WebSocket(`${WS_BASE_URL}/api/ws/generate`);
+      wsRef.current = ws;
 
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      setEvents(prev => [...prev, data]);
-      
-      if (data.stage === 'COMPLETED' && data.status === 'completed') {
-        setIsDone(true);
-        setLoading(false);
-        // The last payload should have evaluation data and diff from completed event
-      } else if (data.stage === 'COMPLETED' && data.status === 'completed' && data.payload) {
-        setResult({ 
-          evaluation: data.payload.evaluation, 
-          v1_evaluation: data.payload.v1_evaluation, 
-          diff: data.payload.diff,
-          critic: data.payload.critic,
-          safety: data.payload.safety,
-          benchmark: data.payload.benchmark // Might be undefined but we'll try catching v1/v2 later or from event stream
-        });
+      ws.onopen = () => {
+        retries = 0;
+        ws.send(JSON.stringify({ task_id: `ui-task-${Date.now()}`, description: taskDesc }));
+      };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        setEvents(prev => [...prev, data]);
         
-        // Actually, we modified the backend to send:
-        // { skill_id, version, evaluation, v1_evaluation, diff, critic, safety }
-        // Wait, where did we send `v1_benchmark` or `v2_benchmark`? Let's check backend payload.
-      } else if (data.stage === 'ERROR') {
-        setIsDone(true);
-        setLoading(false);
-      }
+        if (data.stage === 'COMPLETED' && data.status === 'completed') {
+          setIsDone(true);
+          setLoading(false);
+        } else if (data.stage === 'COMPLETED' && data.status === 'completed' && data.payload) {
+          setResult({ 
+            evaluation: data.payload.evaluation, 
+            v1_evaluation: data.payload.v1_evaluation, 
+            diff: data.payload.diff,
+            critic: data.payload.critic,
+            safety: data.payload.safety,
+            benchmark: data.payload.benchmark
+          });
+        } else if (data.stage === 'ERROR') {
+          setIsDone(true);
+          setLoading(false);
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error("WebSocket error:", error);
+      };
+      
+      ws.onclose = () => {
+        if (!isDone && retries < maxRetries) {
+          retries++;
+          const timeout = Math.min(1000 * Math.pow(2, retries), 10000);
+          console.log(`WebSocket disconnected. Retrying in ${timeout}ms...`);
+          setTimeout(connect, timeout);
+        } else if (!isDone) {
+          setIsDone(true);
+          setLoading(false);
+        }
+      };
     };
 
-    ws.onerror = (error) => {
-      console.error("WebSocket error:", error);
-      setIsDone(true);
-      setLoading(false);
-    };
-    
-    ws.onclose = () => {
-      if (!isDone) {
-         setLoading(false);
-      }
-    };
+    connect();
   };
 
 
