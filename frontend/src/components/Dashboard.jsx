@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Activity, ShieldCheck, Database, Target, TrendingUp, Cpu } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/stats')
+    fetch(`${API_BASE_URL}/api/stats`)
       .then(res => res.json())
       .then(data => {
         setStats(data);

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Search } from 'lucide-react';
 import SkillLineage from './SkillLineage';
+import { API_BASE_URL } from '../config';
 
 export default function SkillLibrary() {
   const [skills, setSkills] = useState([]);
@@ -9,7 +10,7 @@ export default function SkillLibrary() {
   const [selectedSkillVersion, setSelectedSkillVersion] = useState(null);
 
   const fetchSkills = () => {
-    fetch('http://localhost:8000/api/skills')
+    fetch(`${API_BASE_URL}/api/skills`)
       .then(res => res.json())
       .then(data => {
         setSkills(data);

@@ -6,6 +6,7 @@ import Playground from './Playground';
 import ExplainableCritique from './ExplainableCritique';
 import BenchmarkResults from './BenchmarkResults';
 import QualityRadar from './QualityRadar';
+import { WS_BASE_URL } from '../config';
 
 export default function SkillStudio() {
   const [taskDesc, setTaskDesc] = useState('');
@@ -34,7 +35,7 @@ export default function SkillStudio() {
       wsRef.current.close();
     }
 
-    const ws = new WebSocket('ws://localhost:8000/api/ws/generate');
+    const ws = new WebSocket(`${WS_BASE_URL}/api/ws/generate`);
     wsRef.current = ws;
 
     ws.onopen = () => {

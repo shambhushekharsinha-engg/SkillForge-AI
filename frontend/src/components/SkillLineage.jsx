@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { GitCommit, RotateCcw, AlertCircle } from 'lucide-react';
+import { GitBranch, GitCommit, RefreshCcw } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 
 export default function SkillLineage({ skillId, currentVersion, onRollback }) {
   const [history, setHistory] = useState([]);
@@ -8,7 +9,7 @@ export default function SkillLineage({ skillId, currentVersion, onRollback }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/skills')
+    fetch(`${API_BASE_URL}/api/skills`)
       .then(res => res.json())
       .then(data => {
         // Filter and sort for the selected skill
@@ -28,7 +29,7 @@ export default function SkillLineage({ skillId, currentVersion, onRollback }) {
     setRollingBack(true);
     setError(null);
     try {
-      const res = await fetch('http://localhost:8000/api/rollback', {
+      const res = await fetch(`${API_BASE_URL}/api/rollback`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ skill_id: skillId, target_version: targetVersion })

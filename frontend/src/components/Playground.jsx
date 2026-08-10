@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Play, Loader2, Info } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 
 export default function Playground({ skillContent }) {
   const [payloadStr, setPayloadStr] = useState('{\n  "input": "test data"\n}');
@@ -18,7 +19,7 @@ export default function Playground({ skillContent }) {
     setLoading(true);
     setResult(null);
     try {
-      const response = await fetch('http://localhost:8000/api/sandbox/execute', {
+      const response = await fetch(`${API_BASE_URL}/api/sandbox/execute`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
