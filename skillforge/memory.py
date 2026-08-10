@@ -46,6 +46,30 @@ class SkillMemory:
                     FOREIGN KEY(skill_id, version) REFERENCES skills(skill_id, version)
                 )
             ''')
+            
+            # Benchmark cases persistent for a task
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS benchmark_cases (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    task_id TEXT NOT NULL,
+                    category TEXT NOT NULL,
+                    description TEXT NOT NULL,
+                    expected_behavior TEXT NOT NULL,
+                    UNIQUE(task_id, category, description)
+                )
+            ''')
+            
+            # Benchmark results for a specific skill version
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS benchmark_results (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    skill_id TEXT NOT NULL,
+                    version INTEGER NOT NULL,
+                    category TEXT NOT NULL,
+                    score REAL NOT NULL,
+                    FOREIGN KEY(skill_id, version) REFERENCES skills(skill_id, version)
+                )
+            ''')
             conn.commit()
 
     def save_skill(self, skill_id: str, version: int, task_id: str, skill: SkillDraft):
@@ -79,3 +103,39 @@ class SkillMemory:
             cursor = conn.cursor()
             cursor.execute('SELECT * FROM evaluations WHERE skill_id = ? ORDER BY version ASC', (skill_id,))
             return [dict(row) for row in cursor.fetchall()]
+
+    def get_benchmark_cases(self, task_id: str) -> List[Dict[str, Any]]:
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM benchmark_cases WHERE task_id = ?', (task_id,))
+            return [dict(row) for row in cursor.fetchall()]
+
+    def save_benchmark_cases(self, task_id: str, cases: List[Dict[str, str]]):
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            for case in cases:
+                cursor.execute('''
+                    INSERT OR IGNORE INTO benchmark_cases (task_id, category, description, expected_behavior)
+                    VALUES (?, ?, ?, ?)
+                ''', (task_id, case['category'], case['description'], case['expected_behavior']))
+            conn.commit()
+
+    def save_benchmark_results(self, skill_id: str, version: int, results: Dict[str, float]):
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            for category, score in results.items():
+                cursor.execute('''
+                    INSERT INTO benchmark_results (skill_id, version, category, score)
+                    VALUES (?, ?, ?, ?)
+                ''', (skill_id, version, category, score))
+            conn.commit()
+
+    def get_benchmark_results(self, skill_id: str, version: int) -> Dict[str, float]:
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT category, score FROM benchmark_results 
+                WHERE skill_id = ? AND version = ?
+            ''', (skill_id, version))
+            return {row[0]: row[1] for row in cursor.fetchall()}

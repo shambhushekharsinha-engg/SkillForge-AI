@@ -3,6 +3,9 @@ import { Hammer, Loader2, Check, AlertTriangle, ShieldCheck } from 'lucide-react
 import ProgressStepper from './ProgressStepper';
 import DiffViewer from './DiffViewer';
 import Playground from './Playground';
+import ExplainableCritique from './ExplainableCritique';
+import BenchmarkResults from './BenchmarkResults';
+import QualityRadar from './QualityRadar';
 
 export default function SkillStudio() {
   const [taskDesc, setTaskDesc] = useState('');
@@ -50,8 +53,15 @@ export default function SkillStudio() {
         setResult({ 
           evaluation: data.payload.evaluation, 
           v1_evaluation: data.payload.v1_evaluation, 
-          diff: data.payload.diff 
+          diff: data.payload.diff,
+          critic: data.payload.critic,
+          safety: data.payload.safety,
+          benchmark: data.payload.benchmark // Might be undefined but we'll try catching v1/v2 later or from event stream
         });
+        
+        // Actually, we modified the backend to send:
+        // { skill_id, version, evaluation, v1_evaluation, diff, critic, safety }
+        // Wait, where did we send `v1_benchmark` or `v2_benchmark`? Let's check backend payload.
       } else if (data.stage === 'ERROR') {
         setIsDone(true);
         setLoading(false);
@@ -108,6 +118,18 @@ export default function SkillStudio() {
 
         {isDone && result?.v1_evaluation && result?.evaluation && (
           <>
+            <ExplainableCritique critic={result.critic} safety={result.safety} />
+            <div style={{ display: 'flex', gap: '24px' }}>
+              <div style={{ flex: 1 }}>
+                <BenchmarkResults 
+                  v1_benchmark={events.find(e => e.stage === 'EVALUATING' && e.status === 'completed')?.payload?.benchmark} 
+                  v2_benchmark={events.find(e => e.stage === 'RE_EVALUATING' && e.status === 'completed')?.payload?.benchmark} 
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <QualityRadar evaluation={result.evaluation} />
+              </div>
+            </div>
             <DiffViewer 
               diff={result.diff} 
               v1Evaluation={result.v1_evaluation} 

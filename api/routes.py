@@ -17,6 +17,7 @@ from skillforge.memory import SkillMemory
 from skillforge.versioning import VersionManager
 from skillforge.regression import RegressionProtector
 from skillforge.sandbox import MockSandboxProvider
+from skillforge.benchmark import BenchmarkSuite
 
 router = APIRouter()
 
@@ -32,6 +33,7 @@ memory = SkillMemory()
 version_manager = VersionManager(memory)
 regression_protector = RegressionProtector(memory)
 sandbox_provider = MockSandboxProvider()
+benchmark_suite = BenchmarkSuite(llm, memory)
 
 class TaskRequest(BaseModel):
     task_id: str
@@ -73,17 +75,12 @@ async def websocket_generate(websocket: WebSocket):
         task_id = req_data.get("task_id", "demo-task")
         description = req_data.get("description", "")
         
-        # Helper to send status
         async def send_status(stage, status, message, payload=None):
-            event = {
-                "stage": stage,
-                "status": status,
-                "message": message
-            }
+            event = {"stage": stage, "status": status, "message": message}
             if payload:
                 event["payload"] = payload
             await websocket.send_json(event)
-            await asyncio.sleep(0.1) # Small sleep to yield to event loop for streaming
+            await asyncio.sleep(0.1)
             
         await send_status("ANALYZING", "in_progress", "Analyzing task requirements...")
         task_analysis = analyzer.analyze(task_id, description)
@@ -103,11 +100,20 @@ async def websocket_generate(websocket: WebSocket):
         
         await send_status("EVALUATING", "in_progress", "Evaluating skill...")
         eval_res = evaluator.evaluate(task_analysis, draft)
-        await send_status("EVALUATING", "completed", f"Evaluation complete: Score {eval_res.lift}", {"evaluation": eval_res.model_dump()})
+        v1_benchmark = benchmark_suite.evaluate_skill(task_analysis, draft)
+        await send_status("EVALUATING", "completed", f"Evaluation complete: Score {eval_res.lift}", {"evaluation": eval_res.model_dump(), "benchmark": v1_benchmark})
         
-        # Gate 2: Refinement loop
+        skill_id = draft.name.lower().replace(" ", "_")
+        v1_version = version_manager.get_next_version(skill_id)
+        
+        memory.save_skill(skill_id, v1_version, task_id, draft)
+        memory.save_evaluation(eval_res, v1_version)
+        memory.save_benchmark_results(skill_id, v1_version, v1_benchmark)
+        
         diff_text = ""
         v1_eval = eval_res
+        v2_benchmark = None
+        
         if critic_res.should_refine or not safety_res.safe:
             await send_status("REFINING", "in_progress", "Refining skill draft based on feedback...")
             refined_draft = refiner.refine(task_analysis, draft, critic_res, safety_res)
@@ -115,7 +121,8 @@ async def websocket_generate(websocket: WebSocket):
             
             await send_status("RE_EVALUATING", "in_progress", "Re-evaluating refined skill...")
             refined_eval_res = evaluator.evaluate(task_analysis, refined_draft)
-            await send_status("RE_EVALUATING", "completed", f"Re-evaluation complete: Score {refined_eval_res.lift:.2f}", {"evaluation": refined_eval_res.model_dump()})
+            v2_benchmark = benchmark_suite.evaluate_skill(task_analysis, refined_draft)
+            await send_status("RE_EVALUATING", "completed", f"Re-evaluation complete: Score {refined_eval_res.lift:.2f}", {"evaluation": refined_eval_res.model_dump(), "benchmark": v2_benchmark})
             
             diff = list(difflib.unified_diff(
                 draft.markdown_content.splitlines(),
@@ -126,21 +133,25 @@ async def websocket_generate(websocket: WebSocket):
             ))
             diff_text = '\n'.join(diff)
             
-            draft = refined_draft
-            eval_res = refined_eval_res
-        
-        skill_id = draft.name.lower().replace(" ", "_")
-        version = version_manager.get_next_version(skill_id)
-        
-        memory.save_skill(skill_id, version, task_id, draft)
-        memory.save_evaluation(eval_res, version)
+            v2_version = version_manager.get_next_version(skill_id)
+            memory.save_skill(skill_id, v2_version, task_id, refined_draft)
+            memory.save_evaluation(refined_eval_res, v2_version)
+            memory.save_benchmark_results(skill_id, v2_version, v2_benchmark)
+            
+            final_version = v2_version
+            final_eval = refined_eval_res
+        else:
+            final_version = v1_version
+            final_eval = v1_eval
         
         await send_status("COMPLETED", "completed", "Skill generation and validation finished successfully", {
             "skill_id": skill_id,
-            "version": version,
-            "evaluation": eval_res.model_dump(),
+            "version": final_version,
+            "evaluation": final_eval.model_dump(),
             "v1_evaluation": v1_eval.model_dump(),
-            "diff": diff_text
+            "diff": diff_text,
+            "critic": critic_res.model_dump(),
+            "safety": safety_res.model_dump()
         })
         
     except WebSocketDisconnect:
@@ -230,3 +241,56 @@ def execute_sandbox(req: SandboxRequest):
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+class RollbackRequest(BaseModel):
+    skill_id: str
+    target_version: int
+
+@router.post("/rollback")
+def rollback_skill(req: RollbackRequest):
+    try:
+        import sqlite3
+        with sqlite3.connect(memory.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            
+            # Fetch target version content
+            cur.execute("SELECT * FROM skills WHERE skill_id = ? AND version = ?", (req.skill_id, req.target_version))
+            row = cur.fetchone()
+            if not row:
+                raise HTTPException(status_code=404, detail="Target version not found")
+            
+            # Reconstruct draft
+            from skillforge.models.skill import SkillDraft
+            draft = SkillDraft.model_validate_json(row['content_json'])
+            
+            # Find next version number
+            new_version = version_manager.get_next_version(req.skill_id)
+            
+            # Save as new version (append-only)
+            memory.save_skill(req.skill_id, new_version, row['task_id'], draft)
+            
+            # Copy evaluation and feedback to denote rollback
+            cur.execute("SELECT * FROM evaluations WHERE skill_id = ? AND version = ?", (req.skill_id, req.target_version))
+            eval_row = cur.fetchone()
+            if eval_row:
+                cur.execute('''
+                    INSERT INTO evaluations (skill_id, version, task_id, baseline_score, skilled_score, lift, feedback)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                ''', (req.skill_id, new_version, eval_row['task_id'], eval_row['baseline_score'], eval_row['skilled_score'], eval_row['lift'], f"Rollback from V{req.target_version}"))
+            
+            # Copy benchmark results
+            cur.execute("SELECT * FROM benchmark_results WHERE skill_id = ? AND version = ?", (req.skill_id, req.target_version))
+            bench_rows = cur.fetchall()
+            for br in bench_rows:
+                cur.execute('''
+                    INSERT INTO benchmark_results (skill_id, version, category, score)
+                    VALUES (?, ?, ?, ?)
+                ''', (req.skill_id, new_version, br['category'], br['score']))
+            
+            conn.commit()
+            
+        return {"status": "success", "new_version": new_version, "message": f"Rolled back to V{req.target_version} as new V{new_version}"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
