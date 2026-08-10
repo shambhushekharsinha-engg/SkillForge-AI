@@ -1,11 +1,37 @@
-import React, { useState } from 'react';
-import { LayoutDashboard, Beaker, Library, Workflow } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { LayoutDashboard, Beaker, Library, Workflow, Loader2, Server } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import SkillStudio from './components/SkillStudio';
 import SkillLibrary from './components/SkillLibrary';
+import { API_BASE_URL } from './config';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [backendStatus, setBackendStatus] = useState('checking'); // checking, ok, waking, error
+
+  useEffect(() => {
+    let isMounted = true;
+    
+    // If it takes more than 3 seconds to respond, assume Render is cold starting
+    const timeout = setTimeout(() => {
+      if (isMounted && backendStatus === 'checking') {
+        setBackendStatus('waking');
+      }
+    }, 3000);
+
+    fetch(`${API_BASE_URL}/`)
+      .then(() => {
+        if (isMounted) setBackendStatus('ok');
+      })
+      .catch(() => {
+        if (isMounted) setBackendStatus('error');
+      });
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeout);
+    };
+  }, []);
 
   return (
     <div className="app-container">
@@ -43,6 +69,26 @@ function App() {
 
       {/* Main Content Area */}
       <div className="main-content">
+        {(backendStatus === 'waking' || backendStatus === 'checking') && (
+          <div style={{ backgroundColor: '#2d3748', color: '#fff', padding: '12px 24px', borderRadius: '8px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+            <Loader2 className="spin" size={20} style={{ animation: 'spin 2s linear infinite' }} />
+            <div>
+              <strong style={{ display: 'block', fontSize: '14px' }}>Connecting to Serverless Backend...</strong>
+              <span style={{ fontSize: '12px', opacity: 0.8 }}>We are using a free Render instance. It may take up to 50 seconds to wake up from sleep mode.</span>
+            </div>
+          </div>
+        )}
+        
+        {backendStatus === 'error' && (
+          <div style={{ backgroundColor: '#fed7d7', color: '#c53030', padding: '12px 24px', borderRadius: '8px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <Server size={20} />
+            <div>
+              <strong style={{ display: 'block', fontSize: '14px' }}>Backend Offline</strong>
+              <span style={{ fontSize: '12px' }}>Could not connect to the API. Make sure the Render backend is deployed and running.</span>
+            </div>
+          </div>
+        )}
+
         {activeTab === 'dashboard' && <Dashboard />}
         {activeTab === 'studio' && <SkillStudio />}
         {activeTab === 'library' && <SkillLibrary />}
