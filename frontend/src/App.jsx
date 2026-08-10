@@ -11,25 +11,42 @@ function App() {
 
   useEffect(() => {
     let isMounted = true;
-    
-    // If it takes more than 3 seconds to respond, assume Render is cold starting
-    const timeout = setTimeout(() => {
+    let timeoutId;
+
+    const checkHealth = () => {
+      fetch(`${API_BASE_URL}/`)
+        .then(res => {
+          if (res.ok) {
+            if (isMounted) setBackendStatus('ok');
+          } else {
+            // Render might return 502 or 503 while waking up
+            if (isMounted && backendStatus !== 'waking') {
+               setBackendStatus('waking');
+            }
+            timeoutId = setTimeout(checkHealth, 3000);
+          }
+        })
+        .catch(err => {
+          // Network error (CORS or fully offline)
+          if (isMounted && backendStatus !== 'waking') {
+             setBackendStatus('waking');
+          }
+          timeoutId = setTimeout(checkHealth, 3000);
+        });
+    };
+
+    // Give it 1.5 seconds before we show the waking banner if it hasn't connected
+    setTimeout(() => {
       if (isMounted && backendStatus === 'checking') {
         setBackendStatus('waking');
       }
-    }, 3000);
+    }, 1500);
 
-    fetch(`${API_BASE_URL}/`)
-      .then(() => {
-        if (isMounted) setBackendStatus('ok');
-      })
-      .catch(() => {
-        if (isMounted) setBackendStatus('error');
-      });
+    checkHealth();
 
     return () => {
       isMounted = false;
-      clearTimeout(timeout);
+      clearTimeout(timeoutId);
     };
   }, []);
 
