@@ -14,7 +14,7 @@ function App() {
     let timeoutId;
 
     const checkHealth = () => {
-      fetch(`${API_BASE_URL}/`)
+      fetch(`${API_BASE_URL}/`, { cache: 'no-store' })
         .then(res => {
           if (res.ok) {
             if (isMounted) setBackendStatus('ok');
