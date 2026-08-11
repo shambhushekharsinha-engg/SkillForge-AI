@@ -244,8 +244,7 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody>
-                {stats.mutation_stats && stats.mutation_stats.length > 0 ? (
-                  stats.mutation_stats.map((stat, i) => (
+                {stats.mutation_stats.map((stat, i) => (
                     <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                       <td style={{ padding: '8px 4px' }}>{stat.strategy}</td>
                       <td style={{ padding: '8px 4px', textAlign: 'center' }}>{stat.attempts}</td>
