@@ -53,7 +53,16 @@ class EvolutionOrchestrator:
     async def evolve(self, task_id: str, description: str, budget: EvolutionBudget):
         experiment_id = f"SF-{datetime.datetime.now().strftime('%Y%m%d')}-EXP"
         
-        yield {"type": "generation_started", "message": f"Starting experiment {experiment_id}", "generation": 1}
+        experiment_info = {
+            "experiment_id": experiment_id,
+            "seed": f"SF-{datetime.datetime.now().strftime('%H%M%S')}",
+            "model": "Gemini 2.5 Flash",
+            "benchmark_version": "v2.1",
+            "budget": budget.max_generations,
+            "target_score": budget.target_score
+        }
+        
+        yield {"type": "generation_started", "message": f"Starting experiment {experiment_id}", "generation": 1, "experiment_info": experiment_info}
         
         task_analysis = self.analyzer.analyze(task_id, description)
         draft = self.generator.generate(task_analysis)
@@ -154,7 +163,7 @@ class EvolutionOrchestrator:
                         failures.append({"category": k, "message": f"{k} scored {v}"})
                         
                 strategy = self.strategy_selector.select_strategy(failures)
-                yield {"type": "strategy_selected", "generation": generation, "payload": strategy}
+                yield {"type": "strategy_selected", "generation": generation, "payload": {"strategy": strategy, "failures": failures}}
                 
                 yield {"type": "refining_started", "generation": generation}
                 # Use strategy in refinement
