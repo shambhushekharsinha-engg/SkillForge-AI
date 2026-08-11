@@ -15,7 +15,7 @@ from skillforge.refiner import SkillRefiner
 from skillforge.evaluator import ProxyEvaluator
 from skillforge.memory import SkillMemory
 from skillforge.versioning import VersionManager
-from skillforge.regression import RegressionProtector
+from skillforge.regression import RegressionSentinel
 from skillforge.sandbox import MockSandboxProvider
 from skillforge.benchmark import BenchmarkSuite
 
@@ -31,7 +31,7 @@ refiner = SkillRefiner(llm)
 evaluator = ProxyEvaluator(llm)
 memory = SkillMemory()
 version_manager = VersionManager(memory)
-regression_protector = RegressionProtector(memory)
+regression_protector = RegressionSentinel()
 sandbox_provider = MockSandboxProvider()
 benchmark_suite = BenchmarkSuite(llm, memory)
 
