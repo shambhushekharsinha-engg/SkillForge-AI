@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 import datetime
+import hashlib
 
 from .llm.gemini import GeminiLLM
 from .analyzer import TaskAnalyzer
@@ -123,9 +124,9 @@ class EvolutionOrchestrator:
             yield {"type": "redteam_started", "generation": generation}
             rt_res = self.red_team.evaluate(draft)
             
-            for atk in rt_res.attacks:
-                if not atk.defended:
-                    self.memory.save_failure(task_id, current_version, "Red Team", atk.attack_payload, "CRITICAL", strategy)
+            for atk in rt_res.details:
+                if not atk["defended"]:
+                    self.memory.save_failure(task_id, current_version, "Red Team", atk["attack"], "CRITICAL", strategy)
                     
             self.memory.log_audit_event(experiment_id, "REDTEAM_COMPLETED", "✓", f"Gen {generation} Score: {rt_res.defense_rate}")
             self.memory.update_skill_status(task_id, current_version, "SECURITY_VERIFIED")
@@ -134,14 +135,6 @@ class EvolutionOrchestrator:
             # Compute metrics
             capability = sum(bm_res.values()) / len(bm_res) if bm_res else 0.0
             safety = bm_res.get("Safety", 0.0)
-            
-            # If in demo mode, simulate a safety drop in Gen 2 to trigger the counterfactual rejection naturally
-            if budget.demo_mode and generation == 2 and prev_metrics:
-                capability += 0.09 # +9pp capability
-                safety -= 0.06     # -6pp safety
-                bm_res["Safety"] = safety
-                bm_res["Basic"] += 0.09
-            
             # To compute failed_prior_passes, we'd need historical evals. Simplification for MVP: 0 unless modeled.
             failed_prior = 0 
             
@@ -166,18 +159,22 @@ class EvolutionOrchestrator:
                     rejection_reason = "; ".join(gate_res.reasons)
                     
             
-            # No need to reconstruct cases, we have detailed_cases from benchmark.py directly.
-            # But we can annotate them if they were just fixed
-            for case in detailed_cases:
-                if generation > 1 and case["status"] == "PASS":
-                    # Simple heuristic: if it's a pass and it's > gen 1, we can add a dummy memory block for the UI
-                    case["failure_memory"] = {
-                        "detected_in": f"V{parent_version}",
-                        "diagnosis": "Identified in previous generation",
-                        "mutation_strategy": strategy,
-                        "fixed_in": f"V{current_version}",
-                        "fixed": True
-                    }
+            # Genuine failure tracking: Only attach failure_memory if it genuinely failed previously
+            if generation > 1:
+                # Fetch actual past failures for this skill to correlate fixes
+                past_failures = self.memory.get_failures(task_id)
+                for case in detailed_cases:
+                    if case["status"] == "PASS":
+                        # See if this case description matches a past failure
+                        matching_failure = next((f for f in past_failures if f["issue_description"] == case.get("evidence", case["description"])), None)
+                        if matching_failure:
+                            case["failure_memory"] = {
+                                "detected_in": f"V{matching_failure['version']}",
+                                "diagnosis": matching_failure['issue_description'],
+                                "mutation_strategy": matching_failure['attempted_strategy'],
+                                "fixed_in": f"V{current_version}",
+                                "fixed": True
+                            }
             record = EvolutionRecord(
                 experiment_id=experiment_id,
                 generation=generation,

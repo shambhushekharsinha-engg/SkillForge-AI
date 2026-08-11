@@ -16,21 +16,40 @@ class CanaryEvaluator:
         ]
 
     def evaluate(self, skill_draft, task_analysis, benchmark_suite) -> CanaryResult:
-        # Evaluate using the benchmark suite engine for historical regressions
-        cases_dict = {"Canary Historical": self.historical_suite}
-        # We temporarily inject cases into the benchmark suite
-        old_cases = benchmark_suite.get_cases
+        import json
+        prompt = f"""
+        You are the SkillForge Canary evaluator.
+        Skill Name: {task_analysis.task_id}
+        Skill Source:
+        {skill_draft.content}
         
-        def mock_get_cases(task_id):
-            return cases_dict
+        Evaluate this skill against the following historical cases:
+        {json.dumps(self.historical_suite, indent=2)}
+        
+        Return ONLY a valid JSON list in this exact format, with one object per test case:
+        {{
+          "evaluations": [
+            {{"description": "...", "status": "PASS", "evidence": "Why it passed..."}},
+            {{"description": "...", "status": "FAIL", "evidence": "Why it failed..."}}
+          ]
+        }}
+        """
+        
+        try:
+            response = benchmark_suite.llm.generate(prompt)
+            cleaned = response.replace('```json', '').replace('```', '').strip()
+            data = json.loads(cleaned)
+            evals = data.get("evaluations", []) if data else []
+        except Exception:
+            evals = []
             
-        benchmark_suite.get_cases = mock_get_cases
-        bm_out = benchmark_suite.evaluate_skill(task_analysis, skill_draft)
-        benchmark_suite.get_cases = old_cases
-        
         failures = 0
-        for case in bm_out["cases"]:
-            if case["status"] == "FAIL":
+        total = len(self.historical_suite)
+        for idx in range(total):
+            is_pass = False
+            if idx < len(evals):
+                is_pass = str(evals[idx].get("status", "")).upper() == "PASS"
+            if not is_pass:
                 failures += 1
                 
-        return CanaryResult(passed=(failures == 0), cases_evaluated=len(self.historical_suite), failures=failures)
+        return CanaryResult(passed=(failures == 0), cases_evaluated=total, failures=failures)

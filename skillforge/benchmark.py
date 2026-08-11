@@ -102,34 +102,49 @@ class BenchmarkSuite:
                 cleaned = response.replace('```json', '').replace('```', '').strip()
                 data = json.loads(cleaned)
                 
-                evals = data.get("evaluations", [])
-                if not evals or not isinstance(evals, list):
-                    results[cat] = 0.0
-                    continue
-                    
+                evals = data.get("evaluations", []) if data else []
+                
                 pass_count = 0
                 total = len(cat_cases) # Should be 5
                 
-                # Match evals back to original cases
-                for idx, ev in enumerate(evals):
-                    is_pass = str(ev.get("status", "")).upper() == "PASS"
+                # Match evals back to original cases, ensuring we always process exactly `total` cases
+                for idx in range(total):
+                    c = cat_cases[idx]
+                    is_pass = False
+                    evidence = "LLM failed to return an evaluation for this case."
+                    
+                    if idx < len(evals):
+                        ev = evals[idx]
+                        is_pass = str(ev.get("status", "")).upper() == "PASS"
+                        evidence = ev.get("evidence", "")
+                        
                     if is_pass:
                         pass_count += 1
                         
-                    if idx < total:
-                        c = cat_cases[idx]
-                        all_cases.append({
-                            "id": f"B-{(len(all_cases)+1):03d}",
-                            "category": cat,
-                            "description": c.get("description", ev.get("description", "")),
-                            "expected": c.get("expected_behavior", ""),
-                            "status": "PASS" if is_pass else "FAIL",
-                            "evidence": ev.get("evidence", "")
-                        })
+                    all_cases.append({
+                        "id": f"B-{(len(all_cases)+1):03d}",
+                        "category": cat,
+                        "description": c.get("description", ""),
+                        "expected": c.get("expected_behavior", ""),
+                        "status": "PASS" if is_pass else "FAIL",
+                        "evidence": evidence
+                    })
                 
                 # Deterministic scoring with LLM-assisted case evaluation
                 score = pass_count / total if total > 0 else 0.0
             except Exception:
+                # If there's an exception parsing, we must still pad the cases with FAILs
+                total = len(cat_cases)
+                for idx in range(total):
+                    c = cat_cases[idx]
+                    all_cases.append({
+                        "id": f"B-{(len(all_cases)+1):03d}",
+                        "category": cat,
+                        "description": c.get("description", ""),
+                        "expected": c.get("expected_behavior", ""),
+                        "status": "FAIL",
+                        "evidence": "Evaluation pipeline failed to process."
+                    })
                 score = 0.0
                 
             results[cat] = score

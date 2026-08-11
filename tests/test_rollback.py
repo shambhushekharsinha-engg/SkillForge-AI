@@ -1,6 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
-from api.routes import router, version_manager, memory
+from api.routes import router, version_manager
 from skillforge.models.skill import SkillDraft
 from skillforge.models.evaluation import EvaluationResult
 from fastapi import FastAPI
@@ -10,8 +10,12 @@ app.include_router(router, prefix="/api")
 client = TestClient(app)
 
 import uuid
+from skillforge.memory import SkillMemory
 
-def test_append_only_rollback():
+def test_append_only_rollback(tmp_path):
+    db_path = tmp_path / "test_rollback.db"
+    memory = SkillMemory(db_path)
+    
     # Setup test data
     skill_id = f"test_skill_{uuid.uuid4().hex}"
     def create_draft(content):
@@ -41,14 +45,21 @@ def test_append_only_rollback():
     eval2 = EvaluationResult(skill_id=skill_id, task_id="task-1", baseline_score=0.0, skilled_score=1.0, lift=1.0, feedback="v2 eval")
     memory.save_evaluation(eval2, 2)
     
-    # Rollback to V2
+    from skillforge.versioning import VersionManager
+    vm = VersionManager(memory)
+    
+    # We have to patch the global memory for the route to use the local memory
+    import api.routes
+    api.routes.memory = memory
+    api.routes.version_manager = vm
+    
     response = client.post("/api/rollback", json={"skill_id": skill_id, "target_version": 2})
     assert response.status_code == 200
     data = response.json()
     assert data["new_version"] == 4
     
-    # Verify append-only property
-    latest = version_manager.get_next_version(skill_id) - 1
+    # Verify append-only property using the isolated version_manager
+    latest = vm.get_next_version(skill_id) - 1
     assert latest == 4
     
     # Verify the contents of V4 match V2

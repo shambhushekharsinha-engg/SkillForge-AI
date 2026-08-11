@@ -27,6 +27,10 @@ def test_orchestrator_compiles(tmp_path):
         name = "test_skill"
         task_id = "test-task"
         markdown_content = "code"
+        def model_dump_json(self):
+            return "{}"
+        def model_dump(self):
+            return {}
         
     orchestrator.analyzer.analyze = lambda *args: DummyTaskAnalysis()
     orchestrator.generator.generate = lambda *args: DummySkillDraft()

@@ -39,6 +39,15 @@ def test_deterministic_evaluation(tmp_path):
     db_path = tmp_path / "test2.db"
     memory = SkillMemory(db_path)
     
+    class DummySkillDraft:
+        name = "test_skill"
+        task_id = "test-task"
+        markdown_content = "code"
+        def model_dump_json(self):
+            return "{}"
+        def model_dump(self):
+            return {}
+    
     class DummyTask:
         task_id = "test-eval-task"
         
@@ -58,7 +67,7 @@ def test_deterministic_evaluation(tmp_path):
             
     suite = BenchmarkSuite(LLM5Pass(), memory)
     res = suite.evaluate_skill(DummyTask(), DummySkill())
-    assert res["Basic"] == 1.0
+    assert res["scores"]["Basic"] == 1.0
 
     # Test 2: 3 PASS + 2 FAIL -> 0.6
     class LLM3Pass:
@@ -66,8 +75,8 @@ def test_deterministic_evaluation(tmp_path):
             return '{"evaluations": [{"status": "PASS"}, {"status": "FAIL"}, {"status": "PASS"}, {"status": "FAIL"}, {"status": "PASS"}]}'
             
     suite = BenchmarkSuite(LLM3Pass(), memory)
-    res = suite.evaluate_skill(DummyTask(), DummySkill())
-    assert res["Basic"] == 0.6
+    res2 = suite.evaluate_skill(DummyTask(), DummySkill())
+    assert res2["scores"]["Basic"] == 0.6
 
     # Test 3: all FAIL -> 0.0
     class LLMAllFail:
@@ -76,7 +85,7 @@ def test_deterministic_evaluation(tmp_path):
             
     suite = BenchmarkSuite(LLMAllFail(), memory)
     res = suite.evaluate_skill(DummyTask(), DummySkill())
-    assert res["Basic"] == 0.0
+    assert res["scores"]["Basic"] == 0.0
 
     # Test 4: malformed JSON -> 0.0
     class LLMMalformed:
@@ -85,7 +94,7 @@ def test_deterministic_evaluation(tmp_path):
             
     suite = BenchmarkSuite(LLMMalformed(), memory)
     res = suite.evaluate_skill(DummyTask(), DummySkill())
-    assert res["Basic"] == 0.0
+    assert res["scores"]["Basic"] == 0.0
 
     # Test 5: invalid status -> treated as FAIL
     class LLMInvalidStatus:
@@ -94,7 +103,7 @@ def test_deterministic_evaluation(tmp_path):
             
     suite = BenchmarkSuite(LLMInvalidStatus(), memory)
     res = suite.evaluate_skill(DummyTask(), DummySkill())
-    assert res["Basic"] == 0.4  # 2 PASS
+    assert res["scores"]["Basic"] == 0.4  # 2 PASS
 
     # Test 6: wrong number of results (e.g. 2 results returned for 5 cases)
     class LLMWrongNum:
@@ -103,7 +112,7 @@ def test_deterministic_evaluation(tmp_path):
             
     suite = BenchmarkSuite(LLMWrongNum(), memory)
     res = suite.evaluate_skill(DummyTask(), DummySkill())
-    assert res["Basic"] == 0.4  # 2 passes / 5 total cases = 0.4
+    assert res["scores"]["Basic"] == 0.4  # 2 passes / 5 total cases = 0.4
 
     # Test 7: no benchmark cases -> 0.0
     # Create a task with no cases in memory, which will trigger generation
@@ -117,4 +126,4 @@ def test_deterministic_evaluation(tmp_path):
     class DummyTaskEmpty:
         task_id = "empty-task"
     res = suite.evaluate_skill(DummyTaskEmpty(), DummySkill())
-    assert res["Basic"] == 0.0
+    assert res["scores"]["Basic"] == 0.0
