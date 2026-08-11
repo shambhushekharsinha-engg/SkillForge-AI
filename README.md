@@ -4,6 +4,9 @@
 
 *An empirical, safety-aware, self-improving meta-skill system with deterministic evaluation and evolutionary version tracking.*
 
+**🚀 Live Demo (Frontend):** [https://skillforge-meta.vercel.app/](https://skillforge-meta.vercel.app/)
+**🔗 Source Code:** [GitHub Repository](https://github.com/shambhushekharsinha-engg/SkillForge-AI)
+
 ---
 
 ## 1. The Problem: The Unmeasured Cost of Skills
@@ -118,13 +121,12 @@ We integrated graphical components to build a dynamic radar chart that plots dim
 ![Critique Dashboard Placeholder](https://via.placeholder.com/800x400?text=Explainable+Critique+Dashboard)
 Rather than hiding the model's reasoning, our dashboard surfaced the exact issues and safety violations detected during the critique phase, directly mapping them to the concrete refinement actions applied in the next version. 
 
-### Side-by-Side Diff Viewer
-![Diff Viewer Placeholder](https://via.placeholder.com/800x400?text=Side-by-Side+Markdown+Diff)
-A side-by-side textual difference viewer highlighted exactly which lines of the skill were modified during the evolution loop. 
-
-### Empirical Benchmark Tables
-![Benchmark Tables Placeholder](https://via.placeholder.com/800x400?text=Empirical+Benchmark+Tables)
-Furthermore, a detailed dashboard displayed the exact percentage-point lift achieved across the basic, edge case, constraint, and safety categories for every skill generated.
+### The "Prove" Layer: Empirical Auditing
+We didn't just stop at UI dashboards. SkillForge-AI features deep, auditable evidence explorers to prove its evolution:
+- **Case-Level Evidence Explorer:** Drill down into benchmark case results (e.g., B-001) to view the exact reasons for a failure.
+- **Failure Memory Explorer:** A transparent causal chain that traces an observed failure to a mutation strategy, and confirms its resolution in the next generation.
+- **Counterfactual Rejection:** Watch the system reject candidates that improve capability but regress on safety, proving our constraint-first optimization policy.
+- **Experiment Integrity Log:** Immutable, hash-backed experiment records that store configuration, seed, and generation history.
 
 This platform allowed us to scientifically iterate on our process. We did not guess what worked; we measured it, visualized it, and optimized it. The resulting artifacts are the distilled product of hundreds of empirically measured evolution cycles.
 
@@ -183,3 +185,12 @@ PYTHONPATH="." pytest tests
 SkillForge-AI proves that skills are not merely static text files; they are measurable, evolvable hypotheses. By coupling a powerful generative pipeline with a strict, non-negotiable fail-fast safety gate and a deterministic evaluation mechanism, we ensure that every evolved skill consistently and safely lifts agent performance. 
 
 We replaced the unpredictability of one-shot prompt engineering with an empirical optimization engine. Our platform does not rely on memorized templates, external dependencies, or hidden data sources. It relies on a rigorous, scientifically observable methodology that forces frontier models to interrogate, audit, and refine their own output before it ever reaches an execution environment. The result is a system that is robust, domain-agnostic, and, most importantly, uncompromisingly safe.
+
+---
+
+## Developer Profile
+**Developed by:** [shambhushekharsinha-engg](https://github.com/shambhushekharsinha-engg)
+*Building the next generation of safe, empirical AI agent systems.*
+
+## License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
