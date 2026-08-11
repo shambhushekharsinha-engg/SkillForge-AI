@@ -132,25 +132,17 @@ export default function EvolutionLab() {
         setIsDone(true);
         setLoading(false);
         setFinalReason(ev.reason);
-        setMockExperimentRecord({
-          generation_label: 'V3',
-          benchmark_cases: Array.from({length: 20}).map((_, i) => {
-            const id = `B-${(i+1).toString().padStart(3, '0')}`;
-            const isFail = i === 3;
-            return {
-              id,
-              description: isFail ? 'Ambiguous request' : `Benchmark test case ${i+1}`,
-              category: isFail ? 'Edge Case' : 'Capability',
-              status: isFail ? 'PASS' : 'PASS',
-              failure_memory: isFail ? {
-                detected_in: 'V1',
-                diagnosis: 'Skill accepted incomplete input without clarification.',
-                mutation_strategy: 'Edge-Case Expansion',
-                fixed_in: 'V3',
-                fixed: true
-              } : null
-            };
-          })
+        // Find the last accepted generation to show its benchmark cases in the Evidence Explorer
+        setEvents(currentEvents => {
+            const acceptedEvents = currentEvents.filter(e => e.type === 'generation_accepted' && e.payload?.benchmark_cases);
+            if (acceptedEvents.length > 0) {
+                const lastAccepted = acceptedEvents[acceptedEvents.length - 1];
+                setMockExperimentRecord({
+                    generation_label: `V${lastAccepted.generation}`,
+                    benchmark_cases: lastAccepted.payload.benchmark_cases
+                });
+            }
+            return currentEvents;
         });
       }
     }
@@ -245,6 +237,9 @@ export default function EvolutionLab() {
               <Activity size={18} color="#8b5cf6" />
               <strong style={{ color: '#8b5cf6' }}>Empirical Benchmark Executed</strong>
             </div>
+            <div style={{ marginTop: '8px', fontSize: '11px', color: 'var(--text-secondary)', display: 'inline-block', backgroundColor: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px' }}>
+              Source: {expInfo?.benchmark_version || 'BENCH-v1.3'}
+            </div>
           </div>
         );
       case 'redteam_completed':
@@ -254,6 +249,9 @@ export default function EvolutionLab() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Crosshair size={18} color="#f97316" />
               <strong style={{ color: '#f97316' }}>Red Team Arena Defense: {rt ? Math.round(rt.defense_rate * 100) : 0}%</strong>
+            </div>
+            <div style={{ marginTop: '8px', fontSize: '11px', color: 'var(--text-secondary)', display: 'inline-block', backgroundColor: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px' }}>
+              Source: {expInfo?.red_team_version || 'RT-v1.2'}
             </div>
             {rt?.details && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '12px', paddingLeft: '8px', borderLeft: '2px solid rgba(255,255,255,0.1)' }}>
@@ -287,20 +285,21 @@ export default function EvolutionLab() {
         );
       case 'generation_rejected':
         const rj = ev.payload;
+        const gateRes = rj?.regression_result;
         return (
           <div key={idx} style={{ padding: '12px 16px', backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', borderRadius: '8px', marginBottom: '24px' }}>
              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#ef4444' }}>
               <XCircle size={18} />
               <strong>Generation {ev.generation} Rejected</strong>
             </div>
-            {rj?.reason === 'safety_regression' && (
+            {gateRes && gateRes.diffs && !gateRes.accepted && (
               <div style={{ marginTop: '12px', fontSize: '13px' }}>
                 <div style={{ color: '#cbd5e1', marginBottom: '8px' }}>Why wasn't the better candidate selected?</div>
                 <div style={{ display: 'flex', gap: '24px', marginBottom: '8px' }}>
-                   <div><span style={{color: 'var(--text-secondary)'}}>Capability:</span> <strong style={{color: 'var(--accent-success)'}}>+{rj.v_new.cap - rj.v_old.cap}pp</strong></div>
-                   <div><span style={{color: 'var(--text-secondary)'}}>Safety:</span> <strong style={{color: '#ef4444'}}>{rj.v_new.saf - rj.v_old.saf}pp</strong></div>
+                   <div><span style={{color: 'var(--text-secondary)'}}>Capability:</span> <strong style={{color: gateRes.diffs.capability >= 0 ? 'var(--accent-success)' : '#ef4444'}}>{gateRes.diffs.capability >= 0 ? '+' : ''}{Math.round(gateRes.diffs.capability * 100)}pp</strong></div>
+                   <div><span style={{color: 'var(--text-secondary)'}}>Safety:</span> <strong style={{color: gateRes.diffs.safety >= 0 ? 'var(--accent-success)' : '#ef4444'}}>{gateRes.diffs.safety >= 0 ? '+' : ''}{Math.round(gateRes.diffs.safety * 100)}pp</strong></div>
                 </div>
-                <div style={{ color: '#fca5a5' }}><strong>Policy:</strong> Safety regression prohibited.</div>
+                <div style={{ color: '#fca5a5' }}><strong>Policy:</strong> {gateRes.reasons.join(" | ")}</div>
               </div>
             )}
           </div>
@@ -325,6 +324,46 @@ export default function EvolutionLab() {
                      Reason: {ev.payload.failures.length} failures detected (e.g. {ev.payload.failures[0].message})
                  </div>
              )}
+          </div>
+        );
+      case 'evolution_completed':
+        const certHash = ev.hash;
+        return (
+          <div key={idx} style={{ marginTop: '32px' }}>
+            {ev.reason === 'TARGET_REACHED' ? (
+              <>
+                <div className="glass-card" style={{ padding: '12px 16px', borderLeft: '4px solid #3b82f6', marginBottom: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <ShieldCheck size={18} color="#3b82f6" />
+                    <strong style={{ color: '#3b82f6' }}>Canary Evaluation PASSED</strong>
+                  </div>
+                  <div style={{ fontSize: '12px', marginTop: '4px', color: 'var(--text-secondary)' }}>
+                    Evaluated against historical failure corpus.
+                  </div>
+                </div>
+                <div style={{ padding: '24px', backgroundColor: 'rgba(16, 185, 129, 0.15)', border: '1px solid #10b981', borderRadius: '12px', textAlign: 'center' }}>
+                  <ShieldCheck size={48} color="#10b981" style={{ margin: '0 auto 16px auto' }} />
+                  <h3 style={{ color: '#10b981', margin: '0 0 8px 0' }}>SKILL CERTIFIED</h3>
+                  <p style={{ color: '#cbd5e1', fontSize: '14px', margin: '0 0 16px 0' }}>
+                    Target capability {expInfo?.target_score * 100 || 90}% reached with verified safety and defense bounds.
+                  </p>
+                  
+                  {certHash && (
+                    <div style={{ display: 'inline-block', padding: '8px 16px', backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: '6px', border: '1px solid var(--border-color)', fontFamily: 'monospace', fontSize: '12px', color: '#94a3b8' }}>
+                      <div style={{ marginBottom: '4px', fontSize: '10px', color: 'var(--text-secondary)' }}>INTEGRITY SHA-256</div>
+                      {certHash}
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div style={{ padding: '24px', backgroundColor: 'rgba(245, 158, 11, 0.1)', border: '1px solid #f59e0b', borderRadius: '12px', textAlign: 'center' }}>
+                <h3 style={{ color: '#f59e0b', margin: '0 0 8px 0' }}>EVOLUTION EXHAUSTED</h3>
+                <p style={{ color: '#cbd5e1', fontSize: '14px', margin: 0 }}>
+                  Budget exhausted before reaching target criteria.
+                </p>
+              </div>
+            )}
           </div>
         );
       default:

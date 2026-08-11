@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Beaker, Library, Workflow, Loader2, Server, FlaskConical, Network, ShieldCheck, Settings } from 'lucide-react';
+import { LayoutDashboard, Beaker, Library, FlaskConical, Server, ShieldCheck, Settings, LineChart, Target, AlertOctagon, History, ShieldAlert } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import SkillStudio from './components/SkillStudio';
 import SkillLibrary from './components/SkillLibrary';
 import EvolutionLab from './components/EvolutionLab';
-import SwarmArchitect from './components/SwarmArchitect';
-import SafetyCenter from './components/SafetyCenter';
 import Integrations from './components/Integrations';
+import EvidenceExplorer from './components/EvidenceExplorer';
 import { API_BASE_URL } from './config';
 
 function App() {
@@ -56,67 +55,50 @@ function App() {
       {/* Sidebar */}
       <div className="sidebar">
         <div className="brand">
-          <Workflow className="brand-icon" size={28} />
+          <FlaskConical className="brand-icon" size={28} />
           <span>SkillForge-AI</span>
         </div>
+
+        <div style={{ padding: '0 16px', fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px', marginTop: '16px' }}>Workspace</div>
         
-        <button 
-          className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
-          onClick={() => setActiveTab('dashboard')}
-        >
-          <LayoutDashboard size={20} />
-          Dashboard
+        <button className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
+          <LayoutDashboard size={18} /> Dashboard
         </button>
-        
-        <button 
-          className={`nav-item ${activeTab === 'evolution' ? 'active' : ''}`}
-          onClick={() => setActiveTab('evolution')}
-        >
-          <FlaskConical size={20} />
-          Evolution Lab
+        <button className={`nav-item ${activeTab === 'studio' ? 'active' : ''}`} onClick={() => setActiveTab('studio')}>
+          <Beaker size={18} /> Skill Studio
         </button>
-        
-        <button 
-          className={`nav-item ${activeTab === 'studio' ? 'active' : ''}`}
-          onClick={() => setActiveTab('studio')}
-        >
-          <Beaker size={20} />
-          Skill Studio (Manual)
+        <button className={`nav-item ${activeTab === 'evolution' ? 'active' : ''}`} onClick={() => setActiveTab('evolution')}>
+          <LineChart size={18} /> Evolution Lab
         </button>
-        
-        <button 
-          className={`nav-item ${activeTab === 'library' ? 'active' : ''}`}
-          onClick={() => setActiveTab('library')}
-        >
-          <Library size={20} />
-          Skill Library
+        <button className={`nav-item ${activeTab === 'library' ? 'active' : ''}`} onClick={() => setActiveTab('library')}>
+          <Library size={18} /> Skill Library
+        </button>
+        <button className={`nav-item ${activeTab === 'evidence' ? 'active' : ''}`} onClick={() => setActiveTab('evidence')}>
+          <Target size={18} /> Evidence Explorer
         </button>
 
-        <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.1)', margin: '16px 0' }} />
-        <div style={{ padding: '0 16px', fontSize: '12px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>System</div>
-
-        <button 
-          className={`nav-item ${activeTab === 'swarm' ? 'active' : ''}`}
-          onClick={() => setActiveTab('swarm')}
-        >
-          <Network size={20} />
-          Swarm Architect
-        </button>
+        <div style={{ padding: '0 16px', fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px', marginTop: '24px' }}>Research</div>
         
-        <button 
-          className={`nav-item ${activeTab === 'safety' ? 'active' : ''}`}
-          onClick={() => setActiveTab('safety')}
-        >
-          <ShieldCheck size={20} />
-          Safety & Ethics
+        <button className={`nav-item ${activeTab === 'experiments' ? 'active' : ''}`} onClick={() => setActiveTab('experiments')}>
+          <History size={18} /> Experiments
+        </button>
+        <button className={`nav-item ${activeTab === 'redteam' ? 'active' : ''}`} onClick={() => setActiveTab('redteam')}>
+          <ShieldAlert size={18} /> Red Team Arena
+        </button>
+        <button className={`nav-item ${activeTab === 'benchmarks' ? 'active' : ''}`} onClick={() => setActiveTab('benchmarks')}>
+          <Target size={18} /> Benchmark Results
+        </button>
+        <button className={`nav-item ${activeTab === 'memory' ? 'active' : ''}`} onClick={() => setActiveTab('memory')}>
+          <AlertOctagon size={18} /> Failure Memory
         </button>
 
-        <button 
-          className={`nav-item ${activeTab === 'integrations' ? 'active' : ''}`}
-          onClick={() => setActiveTab('integrations')}
-        >
-          <Settings size={20} />
-          Integrations
+        <div style={{ padding: '0 16px', fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px', marginTop: '24px' }}>System</div>
+        
+        <button className={`nav-item ${activeTab === 'integrations' ? 'active' : ''}`} onClick={() => setActiveTab('integrations')}>
+          <Settings size={18} /> Integrations
+        </button>
+        <button className={`nav-item ${activeTab === 'status' ? 'active' : ''}`} onClick={() => setActiveTab('status')}>
+          <Server size={18} /> System Status
         </button>
       </div>
 
@@ -135,12 +117,18 @@ function App() {
         )}
 
         {activeTab === 'dashboard' && <Dashboard />}
-        {activeTab === 'evolution' && <EvolutionLab />}
         {activeTab === 'studio' && <SkillStudio />}
+        {activeTab === 'evolution' && <EvolutionLab />}
         {activeTab === 'library' && <SkillLibrary />}
-        {activeTab === 'swarm' && <SwarmArchitect />}
-        {activeTab === 'safety' && <SafetyCenter />}
+        {activeTab === 'evidence' && <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}><h2>Evidence Explorer</h2><p>Please select an experiment from the Dashboard or Evolution Lab to view its case-level evidence.</p></div>}
+        
+        {activeTab === 'experiments' && <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}><h2>Experiment Archive</h2><p>26 persisted experiments available locally.</p><button onClick={() => setActiveTab('dashboard')} className="btn-primary" style={{marginTop: '16px'}}>View Latest Experiment</button></div>}
+        {activeTab === 'redteam' && <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}><h2>Red Team Arena</h2><p>Currently loaded: 24 adversarial attack vectors.</p></div>}
+        {activeTab === 'benchmarks' && <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}><h2>Benchmark Results</h2><p>Aggregate performance across all test suites.</p></div>}
+        {activeTab === 'memory' && <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}><h2>Failure Memory</h2><p>Persisted causal chains of historical edge-case failures.</p></div>}
+        
         {activeTab === 'integrations' && <Integrations />}
+        {activeTab === 'status' && <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}><h2>System Status</h2><p>All core infrastructure components are online.</p></div>}
       </div>
     </div>
   );

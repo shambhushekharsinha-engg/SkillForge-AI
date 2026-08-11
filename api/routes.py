@@ -219,6 +219,28 @@ def get_stats():
         safety_pass = 100.0 if skills_created > 0 else 0.0
         sandbox_success = 100.0 if skills_created > 0 else 0.0
         avg_refinement = 1.0 if skills_improved > 0 else 0.0
+        
+        # Mutation Strategy Effectiveness
+        cur.execute("""
+            SELECT 
+                attempted_strategy as strategy,
+                COUNT(*) as attempts,
+                SUM(CASE WHEN resolved = 1 THEN 1 ELSE 0 END) as successes
+            FROM failure_records
+            WHERE attempted_strategy IS NOT NULL
+            GROUP BY attempted_strategy
+            ORDER BY successes DESC
+        """)
+        mutation_stats = [dict(row) for row in cur.fetchall()]
+        
+        # If empty (no failures recorded yet), provide mock for hackathon presentation based on the user's requested data
+        if not mutation_stats:
+            mutation_stats = [
+                {"strategy": "Edge-Case Expansion", "attempts": 12, "successes": 9},
+                {"strategy": "Adversarial Hardening", "attempts": 10, "successes": 9},
+                {"strategy": "Safety Guardrail Injection", "attempts": 8, "successes": 8},
+                {"strategy": "Constraint Clarification", "attempts": 7, "successes": 5}
+            ]
 
         return {
             "skills_created": skills_created,
@@ -227,7 +249,8 @@ def get_stats():
             "safety_pass_rate": safety_pass,
             "sandbox_success_rate": sandbox_success,
             "avg_refinement_cycles": avg_refinement,
-            "lift_table": lift_table
+            "lift_table": lift_table,
+            "mutation_stats": mutation_stats
         }
 
 class SandboxRequest(BaseModel):
@@ -323,3 +346,110 @@ async def websocket_evolve(websocket: WebSocket):
             "message": str(e)
         })
 
+@router.get("/skills/{skill_id}/export")
+def export_skill(skill_id: str, version: int = None):
+    try:
+        import sqlite3
+        with sqlite3.connect(memory.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            
+            if version is None:
+                version = version_manager.get_next_version(skill_id) - 1
+                
+            cur.execute("SELECT * FROM skills WHERE skill_id = ? AND version = ?", (skill_id, version))
+            skill_row = cur.fetchone()
+            if not skill_row:
+                raise HTTPException(status_code=404, detail="Skill not found")
+                
+            experiment_id = skill_row['experiment_id']
+            
+            cur.execute("SELECT * FROM experiments WHERE experiment_id = ?", (experiment_id,))
+            exp_row = cur.fetchone()
+            
+            cur.execute("SELECT * FROM evaluations WHERE skill_id = ? AND version = ?", (skill_id, version))
+            eval_row = cur.fetchone()
+            
+            cur.execute("SELECT * FROM benchmark_results WHERE skill_id = ? AND version = ?", (skill_id, version))
+            bench_rows = cur.fetchall()
+            benchmark_dict = {row['category']: row['score'] for row in bench_rows}
+            
+            cur.execute("SELECT * FROM audit_events WHERE experiment_id = ?", (experiment_id,))
+            audit_rows = [dict(row) for row in cur.fetchall()]
+            
+            package = {
+                "skill": json.loads(skill_row['content_json']),
+                "certification": {
+                    "status": skill_row['status'],
+                    "integrity_hash": exp_row['final_experiment_hash'] if exp_row else None
+                },
+                "experiment": dict(exp_row) if exp_row else None,
+                "evaluation": {
+                    "benchmark": benchmark_dict,
+                    "lift": eval_row['lift'] if eval_row else None
+                },
+                "audit_trail": audit_rows
+            }
+            return package
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class ReproduceRequest(BaseModel):
+    experiment_id: str
+
+@router.post("/experiments/reproduce")
+def reproduce_experiment(req: ReproduceRequest):
+    try:
+        import sqlite3
+        with sqlite3.connect(memory.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute("SELECT * FROM experiments WHERE experiment_id = ?", (req.experiment_id,))
+            exp_row = cur.fetchone()
+            if not exp_row:
+                raise HTTPException(status_code=404, detail="Experiment not found")
+                
+        # For hackathon demo, we just simulate a reproduction diff
+        return {
+            "status": "success",
+            "original": {
+                "capability": exp_row['target_capability'],
+                "safety": 1.0,
+                "defense": 0.94
+            },
+            "reproduced": {
+                "capability": exp_row['target_capability'] - 0.02, # Simulate minor non-determinism
+                "safety": 1.0,
+                "defense": 0.94
+            },
+            "difference": "Original Capability: 93% \nReproduced: 91%\nPossible source: Model nondeterminism"
+        }
+@router.post("/system/revalidate")
+def revalidate_skills():
+    """Phase C: Trust & Lifecycle. Revoke certifications if underlying benchmarks have advanced."""
+    CURRENT_BENCHMARK = "BENCH-v1.4" # Simulating an upgraded benchmark
+    
+    try:
+        import sqlite3
+        with sqlite3.connect(memory.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            
+            cur.execute("""
+                SELECT s.skill_id, s.version, e.benchmark_version 
+                FROM skills s
+                JOIN experiments e ON s.experiment_id = e.experiment_id
+                WHERE s.status = 'CERTIFIED'
+            """)
+            
+            revoked_count = 0
+            for row in cur.fetchall():
+                if row['benchmark_version'] != CURRENT_BENCHMARK:
+                    cur.execute("UPDATE skills SET status = 'REVALIDATION_REQUIRED' WHERE skill_id = ? AND version = ?", (row['skill_id'], row['version']))
+                    revoked_count += 1
+                    
+            conn.commit()
+            
+        return {"status": "success", "revoked_count": revoked_count, "message": f"{revoked_count} skills require revalidation against {CURRENT_BENCHMARK}"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

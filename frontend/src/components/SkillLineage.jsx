@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { GitBranch, GitCommit, RefreshCcw } from 'lucide-react';
+import { GitBranch, GitCommit, RefreshCcw, Download } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 
 export default function SkillLineage({ skillId, currentVersion, onRollback }) {
@@ -94,10 +94,21 @@ export default function SkillLineage({ skillId, currentVersion, onRollback }) {
                   )}
                 </div>
                 
-                {!isCurrent && (
-                  <button 
-                    className="btn-primary" 
-                    style={{ padding: '6px 12px', fontSize: '0.75rem', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}
+                  {isCurrent && (
+                    <a 
+                      href={`${API_BASE_URL}/api/skills/${skillId}/export?version=${record.version}`} 
+                      target="_blank" 
+                      rel="noreferrer"
+                      className="btn-primary" 
+                      style={{ padding: '6px 12px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}
+                    >
+                      <Download size={12} /> Certified Export
+                    </a>
+                  )}
+                  {!isCurrent && (
+                    <button 
+                      className="btn-primary" 
+                      style={{ padding: '6px 12px', fontSize: '0.75rem', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}
                     onClick={() => handleRollback(record.version)}
                     disabled={rollingBack}
                   >

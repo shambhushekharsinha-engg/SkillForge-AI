@@ -100,7 +100,24 @@ export default function SkillStudio() {
 
       <div className="glass-card">
         <div className="input-group">
-          <label className="input-label">Task Description</label>
+          <label className="input-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>Task Description</span>
+            <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Quick Start Scenarios:</span>
+          </label>
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
+            <button className="badge" onClick={() => setTaskDesc('Create a python function that safely reads a YAML configuration file, ensuring no directory traversal or code execution.')} style={{ background: 'var(--bg-secondary)', cursor: 'pointer', border: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
+              🟢 Safe Skill
+            </button>
+            <button className="badge" onClick={() => setTaskDesc('Create an API fetcher that handles rate limiting, 5xx errors, and malformed JSON responses gracefully.')} style={{ background: 'var(--bg-secondary)', cursor: 'pointer', border: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
+              🟡 Edge-Case Handling
+            </button>
+            <button className="badge" onClick={() => setTaskDesc('Write a markdown parser that sanitizes HTML and prevents XSS attacks in embedded script tags.')} style={{ background: 'var(--bg-secondary)', cursor: 'pointer', border: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
+              🔴 Adversarial Input
+            </button>
+            <button className="badge" onClick={() => setTaskDesc('Draft an automated customer support triage agent that categorizes incoming tickets and extracts account IDs securely.')} style={{ background: 'var(--bg-secondary)', cursor: 'pointer', border: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
+              🎧 Support Triage
+            </button>
+          </div>
           <textarea 
             className="studio-input" 
             placeholder="e.g. Read all unread emails and append action items to a daily note..."
@@ -109,14 +126,29 @@ export default function SkillStudio() {
           />
         </div>
 
-        <button 
-          className="btn-primary" 
-          onClick={handleGenerate} 
-          disabled={loading || !taskDesc}
-        >
-          {loading ? <Loader2 size={18} className="spin" /> : <Hammer size={18} />}
-          {loading ? 'Forging Skill...' : 'Forge Skill'}
-        </button>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <button 
+            className="btn-primary" 
+            onClick={handleGenerate} 
+            disabled={loading || !taskDesc}
+            style={{ flex: 1 }}
+          >
+            {loading ? <Loader2 size={18} className="spin" /> : <Hammer size={18} />}
+            {loading ? 'Forging Skill...' : 'Forge Skill'}
+          </button>
+          
+          <button 
+            className="btn-primary" 
+            onClick={() => {
+              setTaskDesc('Draft an automated customer support triage agent that categorizes incoming tickets and extracts account IDs securely.');
+              setTimeout(handleGenerate, 100);
+            }} 
+            disabled={loading}
+            style={{ backgroundColor: 'var(--accent-primary)', border: 'none', color: '#fff' }}
+          >
+            🚀 Run Full Evolution Demo
+          </button>
+        </div>
 
         {events.length > 0 && (
           <div style={{ marginTop: '24px' }}>

@@ -1,11 +1,13 @@
 import sqlite3
 import json
+import datetime
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 
 from .config import config
 from .models.skill import SkillDraft
 from .models.evaluation import EvaluationResult
+from .models.experiment import ExperimentManifest
 
 class SkillMemory:
     def __init__(self, db_path: Optional[Path] = None):
@@ -18,15 +20,17 @@ class SkillMemory:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             
-            # Skills table with versions
+            # Skills table with versions and promotion status
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS skills (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     skill_id TEXT NOT NULL,
                     version INTEGER NOT NULL,
+                    experiment_id TEXT,
                     name TEXT,
                     task_id TEXT,
                     content_json TEXT,
+                    status TEXT DEFAULT 'DRAFT',
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     UNIQUE(skill_id, version)
                 )
@@ -85,15 +89,86 @@ class SkillMemory:
                     FOREIGN KEY(skill_id, version) REFERENCES skills(skill_id, version)
                 )
             ''')
+            
+            # Experiments Table
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS experiments (
+                    experiment_id TEXT PRIMARY KEY,
+                    task TEXT,
+                    model TEXT,
+                    seed INTEGER,
+                    budget INTEGER,
+                    target_capability REAL,
+                    benchmark_version TEXT,
+                    red_team_version TEXT,
+                    policy_version TEXT,
+                    timestamp TEXT,
+                    initial_skill_hash TEXT,
+                    final_experiment_hash TEXT,
+                    status TEXT
+                )
+            ''')
+            
+            # Audit Logs Table
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS audit_events (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    experiment_id TEXT NOT NULL,
+                    timestamp TEXT NOT NULL,
+                    event_type TEXT NOT NULL,
+                    status TEXT NOT NULL,
+                    details TEXT
+                )
+            ''')
+            
             conn.commit()
 
-    def save_skill(self, skill_id: str, version: int, task_id: str, skill: SkillDraft):
+    def save_experiment(self, manifest: ExperimentManifest):
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             cursor.execute('''
-                INSERT INTO skills (skill_id, version, name, task_id, content_json)
+                INSERT OR REPLACE INTO experiments 
+                (experiment_id, task, model, seed, budget, target_capability, benchmark_version, red_team_version, policy_version, timestamp, initial_skill_hash, final_experiment_hash, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (manifest.experiment_id, manifest.task, manifest.model, manifest.seed, manifest.budget, manifest.target_capability, manifest.benchmark_version, manifest.red_team_version, manifest.policy_version, manifest.timestamp, manifest.initial_skill_hash, manifest.final_experiment_hash, manifest.status))
+            conn.commit()
+            
+    def update_experiment_hash(self, experiment_id: str, final_hash: str):
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('UPDATE experiments SET final_experiment_hash = ?, status = ? WHERE experiment_id = ?', (final_hash, "COMPLETED", experiment_id))
+            conn.commit()
+
+    def log_audit_event(self, experiment_id: str, event_type: str, status: str, details: str = ""):
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            timestamp = datetime.datetime.utcnow().isoformat()
+            cursor.execute('''
+                INSERT INTO audit_events (experiment_id, timestamp, event_type, status, details)
                 VALUES (?, ?, ?, ?, ?)
-            ''', (skill_id, version, skill.name, task_id, skill.model_dump_json()))
+            ''', (experiment_id, timestamp, event_type, status, details))
+            conn.commit()
+
+    def get_audit_events(self, experiment_id: str) -> List[Dict[str, Any]]:
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM audit_events WHERE experiment_id = ? ORDER BY id ASC', (experiment_id,))
+            return [dict(row) for row in cursor.fetchall()]
+
+    def update_skill_status(self, skill_id: str, version: int, status: str):
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('UPDATE skills SET status = ? WHERE skill_id = ? AND version = ?', (status, skill_id, version))
+            conn.commit()
+
+    def save_skill(self, skill_id: str, version: int, task_id: str, skill: SkillDraft, experiment_id: str = None, status: str = 'DRAFT'):
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT INTO skills (skill_id, version, name, task_id, content_json, experiment_id, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', (skill_id, version, skill.name, task_id, skill.model_dump_json(), experiment_id, status))
             conn.commit()
 
     def save_evaluation(self, eval_res: EvaluationResult, version: int):

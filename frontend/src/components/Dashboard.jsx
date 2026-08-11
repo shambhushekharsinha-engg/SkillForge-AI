@@ -242,30 +242,22 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <td style={{ padding: '8px 4px' }}>Edge-Case Expansion</td>
-                  <td style={{ padding: '8px 4px', textAlign: 'center' }}>8</td>
-                  <td style={{ padding: '8px 4px', textAlign: 'center', color: 'var(--accent-success)' }}>6</td>
-                  <td style={{ padding: '8px 4px', textAlign: 'right', fontWeight: 'bold' }}>75%</td>
-                </tr>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <td style={{ padding: '8px 4px' }}>Safety Hardening</td>
-                  <td style={{ padding: '8px 4px', textAlign: 'center' }}>5</td>
-                  <td style={{ padding: '8px 4px', textAlign: 'center', color: 'var(--accent-success)' }}>5</td>
-                  <td style={{ padding: '8px 4px', textAlign: 'right', fontWeight: 'bold' }}>100%</td>
-                </tr>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <td style={{ padding: '8px 4px' }}>Constraint Repair</td>
-                  <td style={{ padding: '8px 4px', textAlign: 'center' }}>7</td>
-                  <td style={{ padding: '8px 4px', textAlign: 'center', color: 'var(--accent-success)' }}>4</td>
-                  <td style={{ padding: '8px 4px', textAlign: 'right', fontWeight: 'bold' }}>57%</td>
-                </tr>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <td style={{ padding: '8px 4px' }}>Adversarial Hardening</td>
-                  <td style={{ padding: '8px 4px', textAlign: 'center' }}>6</td>
-                  <td style={{ padding: '8px 4px', textAlign: 'center', color: 'var(--accent-success)' }}>5</td>
-                  <td style={{ padding: '8px 4px', textAlign: 'right', fontWeight: 'bold' }}>83%</td>
-                </tr>
+                {stats.mutation_stats && stats.mutation_stats.length > 0 ? (
+                  stats.mutation_stats.map((stat, i) => (
+                    <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                      <td style={{ padding: '8px 4px' }}>{stat.strategy}</td>
+                      <td style={{ padding: '8px 4px', textAlign: 'center' }}>{stat.attempts}</td>
+                      <td style={{ padding: '8px 4px', textAlign: 'center', color: 'var(--accent-success)' }}>{stat.successes}</td>
+                      <td style={{ padding: '8px 4px', textAlign: 'right', fontWeight: 'bold' }}>
+                        {Math.round((stat.successes / stat.attempts) * 100)}%
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <td colSpan="4" style={{ padding: '8px 4px', textAlign: 'center', color: 'var(--text-secondary)' }}>No historical mutation data available.</td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
