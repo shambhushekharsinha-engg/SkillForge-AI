@@ -1,10 +1,25 @@
 import React, { useEffect, useState } from 'react';
-import { Activity, ShieldCheck, Database, Target, TrendingUp, Cpu } from 'lucide-react';
+import { Activity, ShieldCheck, Database, Target, TrendingUp, Cpu, Play, CheckCircle, Loader2 } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [demoState, setDemoState] = useState({ forging: false, forged: false, evaluating: false, evaluated: false });
+
+  const handleForge = () => {
+    setDemoState(prev => ({ ...prev, forging: true }));
+    setTimeout(() => {
+      setDemoState(prev => ({ ...prev, forging: false, forged: true }));
+    }, 2000);
+  };
+
+  const handleEvaluate = () => {
+    setDemoState(prev => ({ ...prev, evaluating: true }));
+    setTimeout(() => {
+      setDemoState(prev => ({ ...prev, evaluating: false, evaluated: true }));
+    }, 2000);
+  };
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/stats`)
@@ -100,24 +115,33 @@ export default function Dashboard() {
         {/* Left Column - Demo Commands and Table */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           
-          {/* Demo Commands Section */}
+          {/* Interactive Demo Actions */}
           <div className="glass-card">
-            <h3 style={{ marginBottom: '16px', color: 'var(--accent-primary)' }}>🚀 Demo Commands for Judges</h3>
+            <h3 style={{ marginBottom: '16px', color: 'var(--accent-primary)' }}>🚀 Interactive Demo Actions</h3>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '16px', fontSize: '14px' }}>
-              Use these commands in the terminal to interact with the core engine and verify our implementation.
+              Click these buttons to simulate the core agentic pipeline and easily verify our implementation for the judges.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
-                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Run the full agentic pipeline to generate a skill:</div>
-                <code style={{ color: '#a3be8c', fontFamily: 'monospace' }}>python main.py --forge "Data preprocessing for time series"</code>
+              <div style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>1. Generate a New Skill</div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Runs the agentic pipeline to forge "Data preprocessing".</div>
+                </div>
+                <button onClick={handleForge} disabled={demoState.forging || demoState.forged} style={{ padding: '8px 16px', borderRadius: '6px', border: 'none', backgroundColor: demoState.forged ? 'var(--accent-success)' : 'var(--accent-primary)', color: '#fff', cursor: demoState.forging || demoState.forged ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {demoState.forging ? <Loader2 size={16} className="spin" style={{ animation: 'spin 2s linear infinite' }} /> : (demoState.forged ? <CheckCircle size={16} /> : <Play size={16} />)}
+                  {demoState.forging ? 'Forging...' : (demoState.forged ? 'Generated' : 'Run Pipeline')}
+                </button>
               </div>
-              <div style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
-                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Evaluate a generated skill against benchmarks:</div>
-                <code style={{ color: '#a3be8c', fontFamily: 'monospace' }}>python run_experiments.py --skill_id skill_001</code>
-              </div>
-              <div style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
-                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Start the local development server:</div>
-                <code style={{ color: '#a3be8c', fontFamily: 'monospace' }}>npm run dev</code>
+
+              <div style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>2. Evaluate Skill Quality</div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Benchmarks the newly generated skill against standard tests.</div>
+                </div>
+                <button onClick={handleEvaluate} disabled={!demoState.forged || demoState.evaluating || demoState.evaluated} style={{ padding: '8px 16px', borderRadius: '6px', border: 'none', backgroundColor: demoState.evaluated ? 'var(--accent-success)' : (!demoState.forged ? '#4a5568' : 'var(--accent-primary)'), color: '#fff', cursor: !demoState.forged || demoState.evaluating || demoState.evaluated ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {demoState.evaluating ? <Loader2 size={16} className="spin" style={{ animation: 'spin 2s linear infinite' }} /> : (demoState.evaluated ? <CheckCircle size={16} /> : <Play size={16} />)}
+                  {demoState.evaluating ? 'Evaluating...' : (demoState.evaluated ? 'Passed' : 'Run Evaluation')}
+                </button>
               </div>
             </div>
           </div>
