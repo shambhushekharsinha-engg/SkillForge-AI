@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Beaker, Library, Workflow, Loader2, Server } from 'lucide-react';
+import { LayoutDashboard, Beaker, Library, Workflow, Loader2, Server, FlaskConical } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import SkillStudio from './components/SkillStudio';
 import SkillLibrary from './components/SkillLibrary';
+import EvolutionLab from './components/EvolutionLab';
 import { API_BASE_URL } from './config';
 
 function App() {
@@ -19,7 +20,6 @@ function App() {
           if (res.ok) {
             if (isMounted) setBackendStatus('ok');
           } else {
-            // Render might return 502 or 503 while waking up
             if (isMounted && backendStatus !== 'waking') {
                setBackendStatus('waking');
             }
@@ -27,7 +27,6 @@ function App() {
           }
         })
         .catch(err => {
-          // Network error (CORS or fully offline)
           if (isMounted && backendStatus !== 'waking') {
              setBackendStatus('waking');
           }
@@ -35,7 +34,6 @@ function App() {
         });
     };
 
-    // Give it 1.5 seconds before we show the waking banner if it hasn't connected
     setTimeout(() => {
       if (isMounted && backendStatus === 'checking') {
         setBackendStatus('waking');
@@ -68,11 +66,19 @@ function App() {
         </button>
         
         <button 
+          className={`nav-item ${activeTab === 'evolution' ? 'active' : ''}`}
+          onClick={() => setActiveTab('evolution')}
+        >
+          <FlaskConical size={20} />
+          Evolution Lab
+        </button>
+        
+        <button 
           className={`nav-item ${activeTab === 'studio' ? 'active' : ''}`}
           onClick={() => setActiveTab('studio')}
         >
           <Beaker size={20} />
-          Skill Studio
+          Skill Studio (Manual)
         </button>
         
         <button 
@@ -107,6 +113,7 @@ function App() {
         )}
 
         {activeTab === 'dashboard' && <Dashboard />}
+        {activeTab === 'evolution' && <EvolutionLab />}
         {activeTab === 'studio' && <SkillStudio />}
         {activeTab === 'library' && <SkillLibrary />}
       </div>

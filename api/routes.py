@@ -294,3 +294,32 @@ def rollback_skill(req: RollbackRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+from skillforge.orchestrator import EvolutionOrchestrator, EvolutionBudget
+
+# We initialize this lazily or globally
+evolution_orchestrator = EvolutionOrchestrator(llm, memory)
+
+@router.websocket("/ws/evolve")
+async def websocket_evolve(websocket: WebSocket):
+    await websocket.accept()
+    try:
+        data = await websocket.receive_text()
+        req_data = json.loads(data)
+        task_id = req_data.get("task_id", "demo-task")
+        description = req_data.get("description", "")
+        
+        # Parse budget if provided
+        budget = EvolutionBudget()
+        
+        async for event in evolution_orchestrator.evolve(task_id, description, budget):
+            await websocket.send_json(event)
+            await asyncio.sleep(0.1) # Small sleep to yield to event loop
+            
+    except WebSocketDisconnect:
+        print("WebSocket client disconnected")
+    except Exception as e:
+        await websocket.send_json({
+            "type": "error",
+            "message": str(e)
+        })
+

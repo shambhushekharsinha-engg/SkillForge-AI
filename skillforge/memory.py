@@ -70,6 +70,21 @@ class SkillMemory:
                     FOREIGN KEY(skill_id, version) REFERENCES skills(skill_id, version)
                 )
             ''')
+            
+            # Failure memory to track historical failures
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS failure_records (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    skill_id TEXT NOT NULL,
+                    version INTEGER NOT NULL,
+                    category TEXT NOT NULL,
+                    failure_message TEXT NOT NULL,
+                    severity TEXT,
+                    attempted_strategy TEXT,
+                    resolved BOOLEAN DEFAULT 0,
+                    FOREIGN KEY(skill_id, version) REFERENCES skills(skill_id, version)
+                )
+            ''')
             conn.commit()
 
     def save_skill(self, skill_id: str, version: int, task_id: str, skill: SkillDraft):
@@ -139,3 +154,29 @@ class SkillMemory:
                 WHERE skill_id = ? AND version = ?
             ''', (skill_id, version))
             return {row[0]: row[1] for row in cursor.fetchall()}
+
+    def save_failure(self, skill_id: str, version: int, category: str, message: str, severity: str, strategy: str = None):
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT INTO failure_records (skill_id, version, category, failure_message, severity, attempted_strategy)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (skill_id, version, category, message, severity, strategy))
+            conn.commit()
+
+    def get_unresolved_failures(self, skill_id: str) -> List[Dict[str, Any]]:
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT * FROM failure_records 
+                WHERE skill_id = ? AND resolved = 0
+                ORDER BY id DESC
+            ''', (skill_id,))
+            return [dict(row) for row in cursor.fetchall()]
+            
+    def mark_failure_resolved(self, failure_id: int):
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('UPDATE failure_records SET resolved = 1 WHERE id = ?', (failure_id,))
+            conn.commit()
