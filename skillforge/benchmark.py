@@ -1,7 +1,6 @@
 from pydantic import BaseModel
 from typing import List, Dict
 import json
-import random
 
 from .llm.gemini import GeminiLLM
 from .models.skill import SkillDraft
@@ -84,15 +83,41 @@ class BenchmarkSuite:
             Test Cases:
             {cases_text}
             
-            Based on the code's logic, estimate the success probability (0.0 to 1.0) of passing all these cases.
-            Return ONLY a JSON object: {{"score": 0.85}}
+            For each test case, structurally simulate the execution of the code. Compare the simulated outcome to the expected behavior.
+            If the code successfully handles the case, assign "PASS". If it fails, assign "FAIL".
+            
+            Return ONLY a valid JSON list in this exact format, with one object per test case:
+            {{
+              "evaluations": [
+                {{"description": "...", "status": "PASS"}},
+                {{"description": "...", "status": "FAIL"}}
+              ]
+            }}
             """
-            response = self.llm.generate(prompt)
+            
+            score = 0.0
             try:
+                response = self.llm.generate(prompt)
                 cleaned = response.replace('```json', '').replace('```', '').strip()
                 data = json.loads(cleaned)
-                results[cat] = float(data.get("score", random.uniform(0.5, 0.9)))
-            except:
-                results[cat] = random.uniform(0.5, 0.9)
+                
+                evals = data.get("evaluations", [])
+                if not evals or not isinstance(evals, list):
+                    results[cat] = 0.0
+                    continue
+                    
+                pass_count = 0
+                total = len(cat_cases) # Should be 5
+                
+                for ev in evals:
+                    if str(ev.get("status", "")).upper() == "PASS":
+                        pass_count += 1
+                
+                # Deterministic scoring with LLM-assisted case evaluation
+                score = pass_count / total if total > 0 else 0.0
+            except Exception:
+                score = 0.0
+                
+            results[cat] = score
                 
         return results
