@@ -61,7 +61,8 @@ To design, calibrate, and prove the efficacy of our methodology, we developed a 
 ### The Persistent Benchmark Suite
 One of the core challenges in developing a meta-skill is proving that the refinement loop actually works. If the first iteration and the second iteration are evaluated against different criteria, the comparison is invalid. To solve this, we implemented a persistent, task-specific benchmark suite built on top of a local SQLite relational database. 
 
-For every task we tested during development, our platform generated and persisted exactly twenty distinct benchmark test cases across four categories:
+For every task we tested during development, our platform generated and persisted exactly twenty distinct benchmark test cases across four categories. Rather than relying on subjective LLM probabilities, these cases are evaluated using **Deterministic Benchmark Scoring with LLM-Assisted Case Simulation**—producing strict case-level PASS/FAIL outcomes for highly defensible empirical evidence. 
+
 1. **Basic Execution**: Tests if the skill handles the optimal path correctly.
 2. **Edge Cases**: Tests if the skill gracefully handles unexpected inputs or missing environment variables.
 3. **Constraints**: Tests if the skill adheres to specific formatting or procedural requirements.
