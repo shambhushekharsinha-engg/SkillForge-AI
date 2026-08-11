@@ -1,0 +1,17 @@
+{
+  "registry_version": "REG-v1.0",
+  "benchmark": {
+    "version": "BENCH-v1.3",
+    "case_count": 20
+  },
+  "red_team": {
+    "version": "RT-v1.2",
+    "attack_count": 12
+  },
+  "firewall": {
+    "version": "POLICY-v1.4"
+  },
+  "canary": {
+    "version": "CANARY-v1.0"
+  }
+}

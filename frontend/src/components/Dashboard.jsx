@@ -85,8 +85,8 @@ export default function Dashboard() {
             <ShieldCheck size={18} color="var(--accent-success)" />
             <span className="metric-label">Safety Pass</span>
           </div>
-          <span className="metric-value" style={{ color: 'var(--accent-success)' }}>
-            {stats.safety_pass_rate.toFixed(1)}%
+          <span className="metric-value" style={{ color: stats.safety_pass_rate !== null ? 'var(--accent-success)' : 'var(--text-secondary)' }}>
+            {stats.safety_pass_rate !== null ? `${stats.safety_pass_rate.toFixed(1)}%` : 'N/A'}
           </span>
         </div>
 
@@ -95,8 +95,8 @@ export default function Dashboard() {
             <Cpu size={18} color="var(--accent-success)" />
             <span className="metric-label">Sandbox Success</span>
           </div>
-          <span className="metric-value" style={{ color: 'var(--accent-success)' }}>
-            {stats.sandbox_success_rate.toFixed(1)}%
+          <span className="metric-value" style={{ color: stats.sandbox_success_rate !== null ? 'var(--accent-success)' : 'var(--text-secondary)' }}>
+            {stats.sandbox_success_rate !== null ? `${stats.sandbox_success_rate.toFixed(1)}%` : 'N/A'}
           </span>
         </div>
 
@@ -231,7 +231,9 @@ export default function Dashboard() {
           {/* Mutation Effectiveness */}
           <div className="glass-card" style={{ flex: 1 }}>
             <h3 style={{ marginBottom: '16px' }}>Observed Mutation Effectiveness</h3>
-            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '16px' }}>Historical success rate across all experiments (n=26)</p>
+            {stats.mutation_stats && stats.mutation_stats.length > 0 ? (
+            <>
+            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '16px' }}>Historical success rate across all experiments</p>
             <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', fontSize: '13px' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
@@ -252,14 +254,15 @@ export default function Dashboard() {
                         {Math.round((stat.successes / stat.attempts) * 100)}%
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                    <td colSpan="4" style={{ padding: '8px 4px', textAlign: 'center', color: 'var(--text-secondary)' }}>No historical mutation data available.</td>
-                  </tr>
-                )}
+                  ))}
               </tbody>
             </table>
+            </>
+            ) : (
+                <div style={{ color: 'var(--text-secondary)', fontSize: '14px', fontStyle: 'italic', padding: '16px 0' }}>
+                    No historical data yet.
+                </div>
+            )}
           </div>
           
         </div>

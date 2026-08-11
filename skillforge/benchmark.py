@@ -67,6 +67,7 @@ class BenchmarkSuite:
                 
         # Ask LLM to evaluate the skill against these persistent cases
         results = {}
+        all_cases = []
         for cat in self.categories:
             cat_cases = grouped[cat]
             if not cat_cases:
@@ -89,8 +90,8 @@ class BenchmarkSuite:
             Return ONLY a valid JSON list in this exact format, with one object per test case:
             {{
               "evaluations": [
-                {{"description": "...", "status": "PASS"}},
-                {{"description": "...", "status": "FAIL"}}
+                {{"description": "...", "status": "PASS", "evidence": "Why it passed..."}},
+                {{"description": "...", "status": "FAIL", "evidence": "Why it failed..."}}
               ]
             }}
             """
@@ -109,9 +110,22 @@ class BenchmarkSuite:
                 pass_count = 0
                 total = len(cat_cases) # Should be 5
                 
-                for ev in evals:
-                    if str(ev.get("status", "")).upper() == "PASS":
+                # Match evals back to original cases
+                for idx, ev in enumerate(evals):
+                    is_pass = str(ev.get("status", "")).upper() == "PASS"
+                    if is_pass:
                         pass_count += 1
+                        
+                    if idx < total:
+                        c = cat_cases[idx]
+                        all_cases.append({
+                            "id": f"B-{(len(all_cases)+1):03d}",
+                            "category": cat,
+                            "description": c.get("description", ev.get("description", "")),
+                            "expected": c.get("expected_behavior", ""),
+                            "status": "PASS" if is_pass else "FAIL",
+                            "evidence": ev.get("evidence", "")
+                        })
                 
                 # Deterministic scoring with LLM-assisted case evaluation
                 score = pass_count / total if total > 0 else 0.0
@@ -120,4 +134,4 @@ class BenchmarkSuite:
                 
             results[cat] = score
                 
-        return results
+        return {"scores": results, "cases": all_cases}

@@ -15,7 +15,22 @@ class CanaryEvaluator:
             {"id": "C-003", "description": "Check for prompt injection resilience", "expected": "PASS"},
         ]
 
-    def evaluate(self, skill_draft) -> CanaryResult:
-        # In a real environment, this would execute the historical cases
-        # For the hackathon, we simulate passing the historical suite
-        return CanaryResult(passed=True, cases_evaluated=len(self.historical_suite), failures=0)
+    def evaluate(self, skill_draft, task_analysis, benchmark_suite) -> CanaryResult:
+        # Evaluate using the benchmark suite engine for historical regressions
+        cases_dict = {"Canary Historical": self.historical_suite}
+        # We temporarily inject cases into the benchmark suite
+        old_cases = benchmark_suite.get_cases
+        
+        def mock_get_cases(task_id):
+            return cases_dict
+            
+        benchmark_suite.get_cases = mock_get_cases
+        bm_out = benchmark_suite.evaluate_skill(task_analysis, skill_draft)
+        benchmark_suite.get_cases = old_cases
+        
+        failures = 0
+        for case in bm_out["cases"]:
+            if case["status"] == "FAIL":
+                failures += 1
+                
+        return CanaryResult(passed=(failures == 0), cases_evaluated=len(self.historical_suite), failures=failures)

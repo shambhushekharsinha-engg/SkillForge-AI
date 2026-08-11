@@ -25,8 +25,9 @@ export default function EvolutionLab() {
     };
   }, []);
 
-  const handleEvolve = async () => {
-    if (!taskDesc) return;
+  const handleEvolve = async (isDemo = false, desc = taskDesc) => {
+    if (!desc) return;
+    setTaskDesc(desc);
     setLoading(true);
     setEvents([]);
     setIsDone(false);
@@ -37,11 +38,12 @@ export default function EvolutionLab() {
     if (wsRef.current) wsRef.current.close();
 
     const connect = () => {
-      const ws = new WebSocket(`${WS_BASE_URL}/api/ws/evolve`);
+      const endpoint = isDemo ? `${WS_BASE_URL}/api/ws/demo` : `${WS_BASE_URL}/api/ws/evolve`;
+      const ws = new WebSocket(endpoint);
       wsRef.current = ws;
 
       ws.onopen = () => {
-        ws.send(JSON.stringify({ task_id: `evo-${Date.now()}`, description: taskDesc }));
+        ws.send(JSON.stringify({ task_id: isDemo ? 'demo-task' : `evo-${Date.now()}`, description: desc }));
       };
 
       ws.onmessage = (event) => {
@@ -221,7 +223,7 @@ export default function EvolutionLab() {
           <div key={idx} className="glass-card" style={{ padding: '12px 16px', borderLeft: `4px solid ${isBlocked ? '#ef4444' : '#10b981'}`, marginBottom: '8px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               {isBlocked ? <ShieldAlert size={18} color="#ef4444" /> : <ShieldCheck size={18} color="#10b981" />}
-              <strong style={{ color: isBlocked ? '#ef4444' : '#10b981' }}>Safety Firewall {isBlocked ? 'BLOCKED' : 'PASSED'}</strong>
+              <strong style={{ color: isBlocked ? '#ef4444' : '#10b981' }}>Deterministic pre-flight policy gate {isBlocked ? 'BLOCKED' : 'PASSED'}</strong>
             </div>
             {isBlocked && fw?.matched_rules && (
               <div style={{ fontSize: '12px', marginTop: '4px', color: '#fca5a5' }}>
@@ -235,7 +237,7 @@ export default function EvolutionLab() {
           <div key={idx} className="glass-card" style={{ padding: '12px 16px', borderLeft: '4px solid #8b5cf6', marginBottom: '8px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Activity size={18} color="#8b5cf6" />
-              <strong style={{ color: '#8b5cf6' }}>Empirical Benchmark Executed</strong>
+              <strong style={{ color: '#8b5cf6' }}>Deterministic scoring with LLM-assisted case evaluation</strong>
             </div>
             <div style={{ marginTop: '8px', fontSize: '11px', color: 'var(--text-secondary)', display: 'inline-block', backgroundColor: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px' }}>
               Source: {expInfo?.benchmark_version || 'BENCH-v1.3'}
@@ -248,7 +250,7 @@ export default function EvolutionLab() {
           <div key={idx} className="glass-card" style={{ padding: '12px 16px', borderLeft: '4px solid #f97316', marginBottom: '8px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Crosshair size={18} color="#f97316" />
-              <strong style={{ color: '#f97316' }}>Red Team Arena Defense: {rt ? Math.round(rt.defense_rate * 100) : 0}%</strong>
+              <strong style={{ color: '#f97316' }}>Versioned deterministic attack corpus + LLM-assisted evaluation: {rt ? Math.round(rt.defense_rate * 100) : 0}% Defended</strong>
             </div>
             <div style={{ marginTop: '8px', fontSize: '11px', color: 'var(--text-secondary)', display: 'inline-block', backgroundColor: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px' }}>
               Source: {expInfo?.red_team_version || 'RT-v1.2'}
@@ -393,43 +395,33 @@ export default function EvolutionLab() {
           <div className="glass-card" style={{ marginBottom: '32px' }}>
             
             <div style={{ marginBottom: '24px' }}>
-              <div style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '12px' }}>Quick Start Scenarios</div>
+              <div style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '12px' }}>🎬 Guided Demo Scenarios</div>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                <button className="btn-secondary" onClick={() => setTaskDesc("Create a skill that summarizes technical documents.")} style={{ fontSize: '12px', padding: '6px 12px' }}>🟢 Safe Skill</button>
-                <button className="btn-secondary" onClick={() => setTaskDesc("Create a skill that handles incomplete and ambiguous user requests.")} style={{ fontSize: '12px', padding: '6px 12px' }}>🟡 Edge Cases</button>
-                <button className="btn-secondary" onClick={() => setTaskDesc("Create a skill that processes untrusted instructions safely.")} style={{ fontSize: '12px', padding: '6px 12px' }}>🔴 Adversarial</button>
-                <button className="btn-secondary" onClick={() => setTaskDesc("Create a robust customer-support triage skill and evolve it to ≥90% capability.")} style={{ fontSize: '12px', padding: '6px 12px' }}>🧬 Support Triage</button>
+                <button className="btn-secondary" onClick={() => handleEvolve(true, "Create a skill that summarizes technical documents.")} style={{ fontSize: '12px', padding: '6px 12px' }}>🟢 Safe Skill</button>
+                <button className="btn-secondary" onClick={() => handleEvolve(true, "Create a skill that handles incomplete and ambiguous user requests.")} style={{ fontSize: '12px', padding: '6px 12px' }}>🟡 Edge Cases</button>
+                <button className="btn-secondary" onClick={() => handleEvolve(true, "Create a skill that processes untrusted instructions safely.")} style={{ fontSize: '12px', padding: '6px 12px' }}>🔴 Adversarial</button>
+                <button className="btn-secondary" onClick={() => handleEvolve(true, "Create a robust customer-support triage skill and evolve it to ≥90% capability.")} style={{ fontSize: '12px', padding: '6px 12px' }}>🧬 Support Triage</button>
               </div>
             </div>
 
-            <div className="input-group">
-              <label className="input-label">Task Description</label>
-              <textarea 
-                className="studio-input" 
-                placeholder="e.g. A secure skill that processes user logs and aggregates errors without exposing PII..."
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <input 
+                type="text" 
+                className="input-primary"
+                placeholder="Or enter a custom task to run a real experiment..."
                 value={taskDesc}
                 onChange={(e) => setTaskDesc(e.target.value)}
-              />
-            </div>
-
-            <div style={{ display: 'flex', gap: '16px' }}>
-              <button 
-                className="btn-primary" 
-                onClick={handleEvolve} 
-                disabled={loading || !taskDesc}
-              >
-                {loading ? <Loader2 size={18} className="spin" /> : <Play size={18} />}
-                {loading ? 'Running...' : 'Launch'}
-              </button>
-              
-              <button 
-                className="btn-primary" 
-                onClick={runFullEvolutionDemo} 
+                onKeyDown={(e) => e.key === 'Enter' && handleEvolve(false)}
                 disabled={loading}
-                style={{ background: 'linear-gradient(135deg, #ef4444, #f97316)', flex: 1, display: 'flex', justifyContent: 'center' }}
+              />
+              <button 
+                className="btn-primary" 
+                onClick={() => handleEvolve(false)} 
+                disabled={loading || !taskDesc}
+                style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
               >
-                {loading ? <Loader2 size={18} className="spin" /> : <Rocket size={18} />}
-                {loading ? 'Simulating Experiment...' : '🚀 RUN FULL EVOLUTION DEMO'}
+                {loading ? <Loader2 className="spin" size={18} /> : <Rocket size={18} />}
+                🧪 Run Experiment
               </button>
             </div>
           </div>
