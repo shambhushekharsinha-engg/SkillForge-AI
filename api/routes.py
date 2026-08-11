@@ -172,7 +172,7 @@ def get_skills():
         conn.row_factory = sqlite3.Row
         cur = conn.cursor()
         cur.execute("""
-            SELECT s.skill_id, s.version, s.name, s.task_id, s.created_at, e.lift, e.safety_status
+            SELECT s.skill_id, s.version, s.name, s.task_id, s.created_at, e.lift
             FROM skills s
             LEFT JOIN evaluations e ON s.skill_id = e.skill_id AND s.version = e.version
             ORDER BY s.created_at DESC
@@ -455,6 +455,8 @@ def reproduce_experiment(req: ReproduceRequest):
             },
             "difference": "Original Capability: 93% \nReproduced: 91%\nNote: This is a Reproducibility Analysis. Full re-run may introduce minor model non-determinism despite fixed seeds."
         }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 @router.post("/system/revalidate")
 def revalidate_skills():
     """Phase C: Trust & Lifecycle. Revoke certifications if underlying benchmarks have advanced."""
