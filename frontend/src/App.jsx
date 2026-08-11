@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Beaker, Library, Workflow, Loader2, Server, FlaskConical } from 'lucide-react';
+import { LayoutDashboard, Beaker, Library, Workflow, Loader2, Server, FlaskConical, Network, ShieldCheck, Settings } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import SkillStudio from './components/SkillStudio';
 import SkillLibrary from './components/SkillLibrary';
 import EvolutionLab from './components/EvolutionLab';
+import SwarmArchitect from './components/SwarmArchitect';
+import SafetyCenter from './components/SafetyCenter';
+import Integrations from './components/Integrations';
 import { API_BASE_URL } from './config';
 
 function App() {
@@ -88,6 +91,33 @@ function App() {
           <Library size={20} />
           Skill Library
         </button>
+
+        <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.1)', margin: '16px 0' }} />
+        <div style={{ padding: '0 16px', fontSize: '12px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>System</div>
+
+        <button 
+          className={`nav-item ${activeTab === 'swarm' ? 'active' : ''}`}
+          onClick={() => setActiveTab('swarm')}
+        >
+          <Network size={20} />
+          Swarm Architect
+        </button>
+        
+        <button 
+          className={`nav-item ${activeTab === 'safety' ? 'active' : ''}`}
+          onClick={() => setActiveTab('safety')}
+        >
+          <ShieldCheck size={20} />
+          Safety & Ethics
+        </button>
+
+        <button 
+          className={`nav-item ${activeTab === 'integrations' ? 'active' : ''}`}
+          onClick={() => setActiveTab('integrations')}
+        >
+          <Settings size={20} />
+          Integrations
+        </button>
       </div>
 
       {/* Main Content Area */}
@@ -108,6 +138,9 @@ function App() {
         {activeTab === 'evolution' && <EvolutionLab />}
         {activeTab === 'studio' && <SkillStudio />}
         {activeTab === 'library' && <SkillLibrary />}
+        {activeTab === 'swarm' && <SwarmArchitect />}
+        {activeTab === 'safety' && <SafetyCenter />}
+        {activeTab === 'integrations' && <Integrations />}
       </div>
     </div>
   );
