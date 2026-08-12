@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CheckCircle2, XCircle, ChevronRight, ChevronDown, Activity, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, XCircle, ChevronRight, ChevronDown, Activity } from 'lucide-react';
 
 export default function EvidenceExplorer({ experimentRecord }) {
   const [expandedCase, setExpandedCase] = useState(null);

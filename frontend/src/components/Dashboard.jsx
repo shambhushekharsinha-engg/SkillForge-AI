@@ -1,26 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Activity, ShieldCheck, Database, Target, TrendingUp, Cpu, Play, CheckCircle, Loader2 } from 'lucide-react';
+import { Activity, ShieldCheck, Database, Target, TrendingUp, Cpu } from 'lucide-react';
 import { API_BASE_URL } from '../config';
-import { useToast } from './Toast';
+
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [demoState, setDemoState] = useState({ forging: false, forged: false, evaluating: false, evaluated: false });
 
-  const handleForge = () => {
-    setDemoState(prev => ({ ...prev, forging: true }));
-    setTimeout(() => {
-      setDemoState(prev => ({ ...prev, forging: false, forged: true }));
-    }, 400);
-  };
-
-  const handleEvaluate = () => {
-    setDemoState(prev => ({ ...prev, evaluating: true }));
-    setTimeout(() => {
-      setDemoState(prev => ({ ...prev, evaluating: false, evaluated: true }));
-    }, 400);
-  };
 
   useEffect(() => {
     const cached = localStorage.getItem('sf_dashboard_cache');
