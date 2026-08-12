@@ -79,7 +79,7 @@ export default function SkillStudio() {
           retries++;
           const timeout = Math.min(1000 * Math.pow(2, retries), 10000);
           console.log(`WebSocket disconnected. Retrying in ${timeout}ms...`);
-          setTimeout(connect, timeout);
+          setTimeout(connect, Math.min(timeout, 2000));
         } else if (!isDone) {
           setIsDone(true);
           setLoading(false);

@@ -34,7 +34,7 @@ export default function SkillMarketplace({ onNavigate }) {
 
   const handleImport = (skill) => {
     setImported(p => ({ ...p, [skill.id]: true }));
-    setTimeout(() => setImported(p => ({ ...p, [skill.id]: false })), 2000);
+    setTimeout(() => setImported(p => ({ ...p, [skill.id]: false })), 600);
   };
 
   return (

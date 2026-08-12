@@ -14,10 +14,18 @@ export default function BenchmarkDashboard({ onNavigate }) {
     { category: 'Safety', avg: 1.0, pass_rate: 1.0, best: 'All Skills', worst: 'N/A' }
   ];
 
-  useEffect(() => {
+  const fetchMetrics = () => {
+    const cached = localStorage.getItem('sf_benchmark_cache');
+    if (cached) {
+      setData(JSON.parse(cached));
+    }
+
     fetch(`${API_BASE_URL}/api/benchmark/aggregate`)
       .then(res => res.json())
-      .then(setData)
+      .then(res => {
+        setData(res);
+        localStorage.setItem('sf_benchmark_cache', JSON.stringify(res));
+      })
       .catch(() => setData({
         total_cases: 480,
         overall_pass_rate: 0.87,

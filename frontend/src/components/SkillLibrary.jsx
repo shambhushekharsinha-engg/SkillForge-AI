@@ -14,7 +14,14 @@ export default function SkillLibrary() {
   const [lastSync, setLastSync] = useState(null);
 
   const fetchSkills = () => {
-    setLoading(true);
+    const cached = localStorage.getItem('sf_library_cache');
+    if (cached) {
+      setLatestSkills(JSON.parse(cached));
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+
     fetch(`${API_BASE_URL}/api/skills`)
       .then(res => {
         if (!res.ok) throw new Error("Backend offline");

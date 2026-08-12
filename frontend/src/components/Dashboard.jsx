@@ -12,25 +12,32 @@ export default function Dashboard() {
     setDemoState(prev => ({ ...prev, forging: true }));
     setTimeout(() => {
       setDemoState(prev => ({ ...prev, forging: false, forged: true }));
-    }, 2000);
+    }, 400);
   };
 
   const handleEvaluate = () => {
     setDemoState(prev => ({ ...prev, evaluating: true }));
     setTimeout(() => {
       setDemoState(prev => ({ ...prev, evaluating: false, evaluated: true }));
-    }, 2000);
+    }, 400);
   };
 
   useEffect(() => {
+    const cached = localStorage.getItem('sf_dashboard_cache');
+    if (cached) {
+      setStats(JSON.parse(cached));
+      setLoading(false);
+    }
+
     fetch(`${API_BASE_URL}/api/stats`)
       .then(res => res.json())
       .then(data => {
         setStats(data);
+        localStorage.setItem('sf_dashboard_cache', JSON.stringify(data));
         setLoading(false);
       })
       .catch(err => {
-        console.error(err);
+        console.error("Dashboard fetch error", err);
         setLoading(false);
       });
   }, []);

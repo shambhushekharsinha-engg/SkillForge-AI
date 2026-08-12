@@ -13,7 +13,14 @@ export default function ExperimentArchive() {
   const [reproducing, setReproducing] = useState({});
 
   const fetchExperiments = () => {
-    setLoading(true);
+    const cached = localStorage.getItem('sf_experiments_cache');
+    if (cached) {
+      setExperiments(JSON.parse(cached));
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+    
     fetch(`${API_BASE_URL}/api/experiments`)
       .then(res => { if (!res.ok) throw new Error('offline'); return res.json(); })
       .then(data => {

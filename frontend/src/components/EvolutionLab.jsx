@@ -90,7 +90,7 @@ export default function EvolutionLab() {
             setIsDone(true);
             setFinalReason(fullEvents[i].reason);
         }
-        await new Promise(r => setTimeout(r, 600)); // 600ms delay between events
+        await new Promise(r => setTimeout(r, 100)); // 100ms delay between events
     }
     setIsReplaying(false);
   };
@@ -128,7 +128,7 @@ export default function EvolutionLab() {
     ];
 
     for (const ev of demoSequence) {
-      await new Promise(r => setTimeout(r, 1200));
+      await new Promise(r => setTimeout(r, 200));
       setEvents(prev => [...prev, ev]);
       if (ev.type === 'evolution_completed') {
         setIsDone(true);

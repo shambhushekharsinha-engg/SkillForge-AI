@@ -27,7 +27,7 @@ export default function BatchRunner({ onNavigate }) {
     for (let i = 0; i < jobs.length; i++) {
       const job = jobs[i];
       setJobs(prev => prev.map(j => j.id === job.id ? { ...j, status: 'running' } : j));
-      await new Promise(r => setTimeout(r, 2000 + Math.random() * 1000));
+      await new Promise(r => setTimeout(r, 400 + Math.random() * 300));
       const success = Math.random() > 0.15;
       setJobs(prev => prev.map(j => j.id === job.id ? { ...j, status: success ? 'done' : 'failed' } : j));
     }
