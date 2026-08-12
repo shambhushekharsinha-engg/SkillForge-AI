@@ -49,6 +49,7 @@
   - [Evidence Explorer](#-evidence-explorer)
   - [Safety Center](#-safety-center)
   - [System Status](#-system-status)
+- [Project Showcase](#-project-showcase)
 - [Safety as a First-Class Citizen](#-safety-as-a-first-class-citizen)
 - [Evidence-Driven Methodology](#-evidence-driven-methodology)
 - [Tech Stack](#-tech-stack)
@@ -112,6 +113,40 @@ The SkillsBench Reality Check
 │                      │   └────────────────────────────────────────┘    │
 └──────────────────────┴──────────────────────────────────────────────────┘
 ```
+
+---
+
+## 📸 Project Showcase
+
+### 🎥 Demo Video
+Watch the full SkillForge-AI pipeline in action:
+https://github.com/shambhushekharsinha-engg/SkillForge-AI/raw/main/demo/demo_video.mp4
+
+### 💻 User Interface (Screenshots)
+<div align="center">
+  <img src="demo/screenshot_01.png" width="49%" />
+  <img src="demo/screenshot_02.png" width="49%" />
+  <img src="demo/screenshot_03.png" width="49%" />
+  <img src="demo/screenshot_04.png" width="49%" />
+  <img src="demo/screenshot_05.png" width="49%" />
+  <img src="demo/screenshot_06.png" width="49%" />
+  <img src="demo/screenshot_07.png" width="49%" />
+  <img src="demo/screenshot_08.png" width="49%" />
+  <img src="demo/screenshot_09.png" width="49%" />
+  <img src="demo/screenshot_10.png" width="49%" />
+  <img src="demo/screenshot_11.png" width="49%" />
+  <img src="demo/screenshot_12.png" width="49%" />
+  <img src="demo/screenshot_13.png" width="49%" />
+  <img src="demo/screenshot_14.png" width="49%" />
+  <img src="demo/screenshot_15.png" width="49%" />
+  <img src="demo/screenshot_16.png" width="49%" />
+</div>
+
+### 🎨 Concept Art & Generated Logos
+<div align="center">
+  <img src="demo/logo_1.png" width="49%" />
+  <img src="demo/logo_2.png" width="49%" />
+</div>
 
 ---
 
