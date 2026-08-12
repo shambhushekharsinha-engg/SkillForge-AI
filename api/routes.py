@@ -108,7 +108,7 @@ async def websocket_generate(websocket: WebSocket):
         
         memory.save_skill(skill_id, v1_version, task_id, draft)
         memory.save_evaluation(eval_res, v1_version)
-        memory.save_benchmark_results(skill_id, v1_version, v1_benchmark)
+        memory.save_benchmark_results(skill_id, v1_version, v1_benchmark.get("scores", {}))
         
         diff_text = ""
         v1_eval = eval_res
@@ -136,7 +136,7 @@ async def websocket_generate(websocket: WebSocket):
             v2_version = version_manager.get_next_version(skill_id)
             memory.save_skill(skill_id, v2_version, task_id, refined_draft)
             memory.save_evaluation(refined_eval_res, v2_version)
-            memory.save_benchmark_results(skill_id, v2_version, v2_benchmark)
+            memory.save_benchmark_results(skill_id, v2_version, v2_benchmark.get("scores", {}))
             
             final_version = v2_version
             final_eval = refined_eval_res
