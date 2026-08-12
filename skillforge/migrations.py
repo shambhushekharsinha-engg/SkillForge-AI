@@ -29,10 +29,14 @@ def run_migrations(db_path: str):
             cur.execute("INSERT INTO schema_migrations (version) VALUES (1)")
             print("Applied migration v1")
             
-        # Migration 2: Add certified flag to skills
+        # Migration 2: Add certified flag and status to skills
         if current_version < 2:
             try:
                 cur.execute("ALTER TABLE skills ADD COLUMN is_certified BOOLEAN DEFAULT 0")
+            except sqlite3.OperationalError:
+                pass
+            try:
+                cur.execute("ALTER TABLE skills ADD COLUMN status TEXT DEFAULT 'DRAFT'")
             except sqlite3.OperationalError:
                 pass
             cur.execute("INSERT INTO schema_migrations (version) VALUES (2)")
