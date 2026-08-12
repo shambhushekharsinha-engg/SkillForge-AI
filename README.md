@@ -119,9 +119,9 @@ The SkillsBench Reality Check
 ## 📸 Project Showcase
 
 ### 🎥 Demo Video
-Watch the full SkillForge-AI pipeline in action:
-https://github.com/shambhushekharsinha-engg/SkillForge-AI/raw/main/demo/demo_video.mp4
+Watch the full SkillForge-AI pipeline in action, complete with an audio walkthrough of our deterministic evolution framework:
 
+https://github.com/shambhushekharsinha-engg/SkillForge-AI/raw/main/demo/demo_video.mp4
 ### 💻 User Interface (Screenshots)
 <div align="center">
   <img src="demo/screenshot_01.png" width="49%" />
