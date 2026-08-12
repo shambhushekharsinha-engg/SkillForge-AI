@@ -8,6 +8,7 @@ export default function SkillLibrary() {
   const [loading, setLoading] = useState(true);
   const [selectedSkillId, setSelectedSkillId] = useState(null);
   const [selectedSkillVersion, setSelectedSkillVersion] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [isOffline, setIsOffline] = useState(false);
   const [lastSync, setLastSync] = useState(null);
@@ -63,6 +64,12 @@ export default function SkillLibrary() {
   map.forEach(s => latestSkills.push(s));
   latestSkills.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
+  const filteredSkills = latestSkills.filter(s => {
+    const q = searchQuery.toLowerCase();
+    return (s.name && s.name.toLowerCase().includes(q)) || 
+           (s.task_id && s.task_id.toLowerCase().includes(q));
+  });
+
   return (
     <div>
       <h1 style={{ marginBottom: '8px' }}>Skill Library</h1>
@@ -94,6 +101,8 @@ export default function SkillLibrary() {
             <input 
               type="text" 
               placeholder="Search skills by name or task ID..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               style={{ 
                 background: 'transparent', 
                 border: 'none', 
@@ -120,7 +129,7 @@ export default function SkillLibrary() {
                 </tr>
               </thead>
               <tbody>
-                {latestSkills.map((skill, idx) => (
+                {filteredSkills.map((skill, idx) => (
                   <tr 
                     key={idx} 
                     style={{ cursor: 'pointer', background: selectedSkillId === skill.skill_id ? 'var(--bg-tertiary)' : 'transparent' }}
@@ -143,9 +152,9 @@ export default function SkillLibrary() {
                     </td>
                   </tr>
                 ))}
-                {latestSkills.length === 0 && (
+                {filteredSkills.length === 0 && (
                   <tr>
-                    <td colSpan="5" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No skills found in memory.</td>
+                    <td colSpan="6" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No skills found in memory.</td>
                   </tr>
                 )}
               </tbody>

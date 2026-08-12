@@ -255,3 +255,64 @@ class SkillMemory:
             cursor = conn.cursor()
             cursor.execute('UPDATE failure_records SET resolved = 1 WHERE id = ?', (failure_id,))
             conn.commit()
+
+    def get_failures(self, skill_id: str) -> List[Dict[str, Any]]:
+        """Get all failure records for a skill (aliased for orchestrator compatibility)."""
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT *,
+                       failure_message as issue_description
+                FROM failure_records
+                WHERE skill_id = ?
+                ORDER BY id ASC
+            ''', (skill_id,))
+            return [dict(row) for row in cursor.fetchall()]
+
+    def get_all_failures(self, skill_id: str = None) -> List[Dict[str, Any]]:
+        """Get all failure records, optionally filtered by skill_id."""
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            if skill_id:
+                cursor.execute('''
+                    SELECT *, failure_message as issue_description
+                    FROM failure_records WHERE skill_id = ?
+                    ORDER BY id DESC
+                ''', (skill_id,))
+            else:
+                cursor.execute('''
+                    SELECT *, failure_message as issue_description
+                    FROM failure_records ORDER BY id DESC
+                ''')
+            return [dict(row) for row in cursor.fetchall()]
+
+    def get_all_experiments(self) -> List[Dict[str, Any]]:
+        """Fetch all experiments ordered by most recent first."""
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM experiments ORDER BY timestamp DESC')
+            return [dict(row) for row in cursor.fetchall()]
+
+    def get_aggregate_benchmarks(self) -> Dict[str, Any]:
+        """Aggregate benchmark scores across all skills by category."""
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT category, AVG(score) as avg_score, COUNT(*) as count
+                FROM benchmark_results
+                GROUP BY category
+                ORDER BY category
+            ''')
+            categories = [dict(row) for row in cursor.fetchall()]
+
+            cursor.execute('SELECT COUNT(*) as total FROM benchmark_results')
+            total_cases = cursor.fetchone()['total']
+
+            return {
+                'categories': categories,
+                'total_cases': total_cases
+            }

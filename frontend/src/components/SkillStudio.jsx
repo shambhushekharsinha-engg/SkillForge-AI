@@ -54,15 +54,16 @@ export default function SkillStudio() {
         if (data.stage === 'COMPLETED' && data.status === 'completed') {
           setIsDone(true);
           setLoading(false);
-        } else if (data.stage === 'COMPLETED' && data.status === 'completed' && data.payload) {
-          setResult({ 
-            evaluation: data.payload.evaluation, 
-            v1_evaluation: data.payload.v1_evaluation, 
-            diff: data.payload.diff,
-            critic: data.payload.critic,
-            safety: data.payload.safety,
-            benchmark: data.payload.benchmark
-          });
+          if (data.payload) {
+            setResult({ 
+              evaluation: data.payload.evaluation, 
+              v1_evaluation: data.payload.v1_evaluation, 
+              diff: data.payload.diff,
+              critic: data.payload.critic,
+              safety: data.payload.safety,
+              benchmark: data.payload.benchmark
+            });
+          }
         } else if (data.stage === 'ERROR') {
           setIsDone(true);
           setLoading(false);
@@ -175,7 +176,7 @@ export default function SkillStudio() {
               v1Evaluation={result.v1_evaluation} 
               v2Evaluation={result.evaluation} 
             />
-            {result.evaluation.skill_id && (
+            {result.evaluation && (
               <Playground skillContent={taskDesc} />
             )}
           </>

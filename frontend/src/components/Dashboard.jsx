@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Activity, ShieldCheck, Database, Target, TrendingUp, Cpu, Play, CheckCircle, Loader2 } from 'lucide-react';
 import { API_BASE_URL } from '../config';
+import { useToast } from './Toast';
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
@@ -35,7 +36,15 @@ export default function Dashboard() {
   }, []);
 
   if (loading) {
-    return <div style={{ color: 'var(--text-secondary)' }}>Loading Intelligence Dashboard...</div>;
+    return (
+      <div style={{ paddingBottom: '40px' }}>
+        <div className="skeleton" style={{ height: '32px', width: '300px', marginBottom: '12px' }} />
+        <div className="skeleton" style={{ height: '20px', width: '400px', marginBottom: '32px' }} />
+        <div className="metric-grid" style={{ marginBottom: '24px' }}>
+          {[1,2,3].map(i => <div key={i} className="glass-card skeleton" style={{ height: '100px' }} />)}
+        </div>
+      </div>
+    );
   }
 
   if (!stats) {
@@ -109,6 +118,23 @@ export default function Dashboard() {
             {stats.avg_refinement_cycles.toFixed(1)} cycles
           </span>
         </div>
+      </div>
+
+      {/* Quick-Start Actions */}
+      <div style={{ display: 'flex', gap: '12px', marginBottom: '32px', flexWrap: 'wrap' }}>
+        <div style={{ fontSize: '13px', color: 'var(--text-muted)', alignSelf: 'center', marginRight: '4px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Quick Actions:</div>
+        <button className="btn-secondary" onClick={() => window.location.hash = '#studio'} style={{ fontSize: '13px' }}>
+          🔨 Forge New Skill
+        </button>
+        <button className="btn-secondary" onClick={() => window.location.hash = '#evolution'} style={{ fontSize: '13px' }}>
+          🧬 Run Evolution
+        </button>
+        <button className="btn-secondary" onClick={() => window.location.hash = '#library'} style={{ fontSize: '13px' }}>
+          📚 View Skill Library
+        </button>
+        <button className="btn-secondary" style={{ fontSize: '13px' }}>
+          🔄 Revalidate All Skills
+        </button>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px', marginBottom: '24px' }}>
@@ -265,6 +291,22 @@ export default function Dashboard() {
           </div>
           
         </div>
+      </div>
+
+      {/* Live Platform Stats Bar */}
+      <div className="glass-card" style={{ marginTop: '24px', padding: '16px 24px', display: 'flex', gap: '32px', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>Platform Metrics</div>
+        {[
+          { label: 'Skills Created', value: stats?.skills_created ?? '–' },
+          { label: 'Skills Improved', value: stats?.skills_improved ?? '–' },
+          { label: 'Avg Lift', value: stats?.average_lift != null ? `+${stats.average_lift}%` : '–' },
+          { label: 'Safety Rate', value: stats?.safety_pass_rate != null ? `${stats.safety_pass_rate.toFixed(1)}%` : '100%' },
+        ].map(m => (
+          <div key={m.label} style={{ display: 'flex', gap: '8px', alignItems: 'baseline' }}>
+            <span style={{ fontSize: '20px', fontWeight: 800, color: 'var(--accent-primary)' }}>{m.value}</span>
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{m.label}</span>
+          </div>
+        ))}
       </div>
     </div>
   );
