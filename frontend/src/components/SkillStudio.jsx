@@ -24,8 +24,9 @@ export default function SkillStudio() {
     };
   }, []);
 
-  const handleGenerate = async () => {
-    if (!taskDesc) return;
+  const handleGenerate = async (overrideDesc = null) => {
+    const descToUse = overrideDesc || taskDesc;
+    if (!descToUse) return;
     setLoading(true);
     setResult(null);
     setEvents([]);
@@ -36,7 +37,7 @@ export default function SkillStudio() {
     }
 
     let retries = 0;
-    const maxRetries = 5;
+    const maxRetries = 30; // 30 retries * 2s = 60s (enough to survive Render 50s cold start)
 
     const connect = () => {
       const ws = new WebSocket(`${WS_BASE_URL}/api/ws/generate`);
@@ -44,7 +45,7 @@ export default function SkillStudio() {
 
       ws.onopen = () => {
         retries = 0;
-        ws.send(JSON.stringify({ task_id: `ui-task-${Date.now()}`, description: taskDesc }));
+        ws.send(JSON.stringify({ task_id: `ui-task-${Date.now()}`, description: descToUse }));
       };
 
       ws.onmessage = (event) => {
@@ -141,8 +142,9 @@ export default function SkillStudio() {
           <button 
             className="btn-primary" 
             onClick={() => {
-              setTaskDesc('Draft an automated customer support triage agent that categorizes incoming tickets and extracts account IDs securely.');
-              setTimeout(handleGenerate, 100);
+              const demo = 'Draft an automated customer support triage agent that categorizes incoming tickets and extracts account IDs securely.';
+              setTaskDesc(demo);
+              handleGenerate(demo);
             }} 
             disabled={loading}
             style={{ backgroundColor: 'var(--accent-primary)', border: 'none', color: '#fff' }}
