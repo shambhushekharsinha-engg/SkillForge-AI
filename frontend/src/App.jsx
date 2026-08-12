@@ -134,18 +134,6 @@ function App() {
 
         {/* ── Main ── */}
         <main className="main-content">
-          {backendStatus === 'waking' && (
-            <div style={{ background: 'rgba(245,158,11,0.08)', color: '#f59e0b', padding: '10px 18px', borderRadius: '10px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px', border: '1px solid rgba(245,158,11,0.2)', fontSize: '13px' }}>
-              <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#f59e0b', animation: 'pulseGlow 1.5s infinite', flexShrink: 0 }} />
-              <div><strong>Backend waking up</strong> — Render cold start in progress. Live features available shortly. Cached data shown where available.</div>
-            </div>
-          )}
-          {backendStatus === 'error' && (
-            <div style={{ background: 'rgba(239,68,68,0.08)', color: '#ef4444', padding: '10px 18px', borderRadius: '10px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px', border: '1px solid rgba(239,68,68,0.2)', fontSize: '13px' }}>
-              <Server size={16} />
-              <div><strong>Backend Offline</strong> — Could not connect after multiple retries. Please check the Render deployment.</div>
-            </div>
-          )}
 
           <div className="page-enter">
             <ErrorBoundary key={activeTab}>
