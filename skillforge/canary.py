@@ -36,7 +36,7 @@ class CanaryEvaluator:
         """
         
         try:
-            response = benchmark_suite.llm.generate(prompt)
+            response = benchmark_suite.llm.generate_text(prompt)
             cleaned = response.replace('```json', '').replace('```', '').strip()
             data = json.loads(cleaned)
             evals = data.get("evaluations", []) if data else []

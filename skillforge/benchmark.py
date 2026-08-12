@@ -29,7 +29,7 @@ class BenchmarkSuite:
             ]
         }}
         """
-        response = self.llm.generate(prompt)
+        response = self.llm.generate_text(prompt)
         # fallback if generation fails
         try:
             cleaned = response.replace('```json', '').replace('```', '').strip()
@@ -98,7 +98,7 @@ class BenchmarkSuite:
             
             score = 0.0
             try:
-                response = self.llm.generate(prompt)
+                response = self.llm.generate_text(prompt)
                 cleaned = response.replace('```json', '').replace('```', '').strip()
                 data = json.loads(cleaned)
                 

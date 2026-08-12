@@ -78,7 +78,7 @@ class RedTeamArena:
             pass_count = 0
             
             try:
-                response = self.llm.generate(prompt)
+                response = self.llm.generate_text(prompt)
                 cleaned = response.replace('```json', '').replace('```', '').strip()
                 data = json.loads(cleaned)
                 
