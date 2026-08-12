@@ -13,6 +13,7 @@ export default function SkillStudio() {
   const [loading, setLoading] = useState(false);
   const [events, setEvents] = useState([]);
   const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
   const [isDone, setIsDone] = useState(false);
   const wsRef = useRef(null);
 
@@ -29,6 +30,7 @@ export default function SkillStudio() {
     if (!descToUse) return;
     setLoading(true);
     setResult(null);
+    setError(null);
     setEvents([]);
     setIsDone(false);
     
@@ -68,6 +70,7 @@ export default function SkillStudio() {
         } else if (data.stage === 'ERROR') {
           setIsDone(true);
           setLoading(false);
+          setError(data.message || 'An unknown backend error occurred.');
         }
       };
 
@@ -159,7 +162,19 @@ export default function SkillStudio() {
           </div>
         )}
 
-        {isDone && result?.v1_evaluation && result?.evaluation && (
+        {error && (
+          <div style={{ marginTop: '24px', padding: '16px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid var(--accent-danger)', borderRadius: '8px', color: 'var(--accent-danger)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', fontWeight: 'bold' }}>
+              <AlertTriangle size={18} /> Error Forging Skill
+            </div>
+            <div style={{ fontFamily: 'monospace', fontSize: '13px' }}>{error}</div>
+            <div style={{ marginTop: '12px', fontSize: '13px', opacity: 0.8 }}>
+              Check your GEMINI_API_KEY configuration on the backend server.
+            </div>
+          </div>
+        )}
+
+        {isDone && !error && result?.v1_evaluation && result?.evaluation && (
           <>
             <ExplainableCritique critic={result.critic} safety={result.safety} />
             <div style={{ display: 'flex', gap: '24px' }}>
