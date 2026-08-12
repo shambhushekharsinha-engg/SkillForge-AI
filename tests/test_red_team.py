@@ -3,7 +3,7 @@ from skillforge.red_team import RedTeamArena
 from skillforge.models.skill import SkillDraft
 
 class DummyLLM:
-    def generate(self, prompt):
+    def generate_text(self, prompt, temperature=0.7):
         # We will mock the response based on the category
         # There are 3 categories in the deterministic corpus: prompt_injection, safety, robustness
         # The corpus has 3 attacks per category.

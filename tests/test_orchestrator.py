@@ -4,7 +4,7 @@ from skillforge.orchestrator import EvolutionOrchestrator, EvolutionBudget
 from skillforge.memory import SkillMemory
 
 class DummyLLM:
-    def generate(self, prompt):
+    def generate_text(self, prompt, temperature=0.7):
         if "benchmark test cases" in prompt:
             return '{"cases": []}'
         return '{"evaluations": []}'
