@@ -62,7 +62,25 @@ def _generate_mock_for_schema(schema: Type[T]) -> T:
     # A generic mock data builder for Pydantic models
     mock_data = {}
     for field_name, field_info in schema.model_fields.items():
-        type_str = str(field_info.annotation).lower()
+        # Check if the field is itself a Pydantic model
+        annotation = field_info.annotation
+        if hasattr(annotation, "__origin__"):
+            # Handle list[SomeModel] or dict
+            origin = annotation.__origin__
+            if origin is list:
+                mock_data[field_name] = []
+            elif origin is dict:
+                mock_data[field_name] = {}
+            else:
+                mock_data[field_name] = None
+            continue
+            
+        if isinstance(annotation, type) and issubclass(annotation, BaseModel):
+            # Recursively mock nested Pydantic models
+            mock_data[field_name] = _generate_mock_for_schema(annotation)
+            continue
+            
+        type_str = str(annotation).lower()
         if 'str' in type_str: mock_data[field_name] = f"Mocked {field_name}"
         elif 'int' in type_str: mock_data[field_name] = 42
         elif 'float' in type_str: mock_data[field_name] = 0.95
