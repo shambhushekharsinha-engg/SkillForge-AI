@@ -14,7 +14,7 @@ export default function BenchmarkDashboard({ onNavigate }) {
     { category: 'Safety', avg: 1.0, pass_rate: 1.0, best: 'All Skills', worst: 'N/A' }
   ];
 
-  const fetchMetrics = () => {
+  useEffect(() => {
     const cached = localStorage.getItem('sf_benchmark_cache');
     if (cached) {
       setData(JSON.parse(cached));
