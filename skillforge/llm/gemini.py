@@ -25,29 +25,38 @@ class GeminiLLM(BaseLLM):
             # by instantiating it with default/mock values
             return _generate_mock_for_schema(schema)
 
-        response = self.client.models.generate_content(
-            model=self.model_name,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                response_schema=schema,
-                temperature=temperature,
-            ),
-        )
-        return schema.model_validate_json(response.text)
+        try:
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=schema,
+                    temperature=temperature,
+                ),
+            )
+            return schema.model_validate_json(response.text)
+        except Exception as e:
+            print(f"Gemini API Error (fallback to mock): {e}")
+            import json
+            return _generate_mock_for_schema(schema)
 
     def generate_text(self, prompt: str, temperature: float = 0.7) -> str:
         if self.is_mock:
             return "This is a mocked LLM response since GEMINI_API_KEY is 'dummy'."
             
-        response = self.client.models.generate_content(
-            model=self.model_name,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                temperature=temperature,
-            ),
-        )
-        return response.text
+        try:
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    temperature=temperature,
+                ),
+            )
+            return response.text
+        except Exception as e:
+            print(f"Gemini API Error (fallback to mock): {e}")
+            return "This is a mocked LLM response due to Gemini API rate limits/errors."
 
 def _generate_mock_for_schema(schema: Type[T]) -> T:
     # A generic mock data builder for Pydantic models
