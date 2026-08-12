@@ -25,34 +25,7 @@ import { API_BASE_URL } from './config';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [backendStatus, setBackendStatus] = useState('checking');
 
-  useEffect(() => {
-    let isMounted = true;
-    let timeoutId;
-    let attempts = 0;
-
-    const checkHealth = () => {
-      fetch(`${API_BASE_URL}/`, { cache: 'no-store' })
-        .then(res => {
-          if (res.ok) { if (isMounted) setBackendStatus('ok'); }
-          else {
-            if (isMounted) setBackendStatus('waking');
-            attempts++;
-            timeoutId = setTimeout(checkHealth, Math.min(3000 * attempts, 15000));
-          }
-        })
-        .catch(() => {
-          if (isMounted) setBackendStatus(attempts > 5 ? 'error' : 'waking');
-          attempts++;
-          timeoutId = setTimeout(checkHealth, Math.min(3000 * attempts, 15000));
-        });
-    };
-
-    setTimeout(() => { if (isMounted && backendStatus === 'checking') setBackendStatus('waking'); }, 1500);
-    checkHealth();
-    return () => { isMounted = false; clearTimeout(timeoutId); };
-  }, []);
 
   const NavItem = ({ tab, icon, label }) => (
     <button
@@ -69,12 +42,7 @@ function App() {
     <div style={{ padding: '0 8px', fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '2px', marginTop: '16px', fontWeight: 700 }}>{label}</div>
   );
 
-  const statusConfig = {
-    ok:       { color: 'var(--accent-success)', label: 'API Online',    pulse: false },
-    waking:   { color: '#f59e0b',               label: 'Waking up…',   pulse: true  },
-    checking: { color: '#60a5fa',               label: 'Connecting…',  pulse: true  },
-    error:    { color: 'var(--accent-danger)',   label: 'API Offline',  pulse: false },
-  }[backendStatus];
+
 
   return (
     <ToastProvider>
@@ -86,22 +54,7 @@ function App() {
             <span>SkillForge<span style={{ color: 'var(--accent-primary)' }}>-AI</span></span>
           </div>
 
-          {/* Status Pill */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '8px',
-            padding: '7px 10px', borderRadius: '8px',
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px solid var(--border-color)',
-            marginBottom: '8px', fontSize: '11.5px',
-            color: statusConfig.color
-          }}>
-            <div style={{
-              width: '7px', height: '7px', borderRadius: '50%',
-              backgroundColor: statusConfig.color, flexShrink: 0,
-              animation: statusConfig.pulse ? 'pulseGlow 1.5s infinite' : 'none'
-            }} />
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{statusConfig.label}</span>
-          </div>
+
 
           <NavSection label="Workspace" />
           <NavItem tab="dashboard"    icon={<LayoutDashboard size={16} />} label="Dashboard" />
