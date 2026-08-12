@@ -15,6 +15,13 @@ import SafetyCenter from './components/SafetyCenter';
 import ExperimentArchive from './components/ExperimentArchive';
 import EvidenceExplorerPage from './components/EvidenceExplorerPage';
 import FailureMemoryExplorer from './components/FailureMemoryExplorer';
+import BenchmarkDashboard from './components/BenchmarkDashboard';
+import SystemStatus from './components/SystemStatus';
+import RedTeamArena from './components/RedTeamArena';
+import SkillComparison from './components/SkillComparison';
+import SkillMarketplace from './components/SkillMarketplace';
+import BatchRunner from './components/BatchRunner';
+import { API_BASE_URL } from './config';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
