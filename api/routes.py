@@ -80,7 +80,7 @@ async def websocket_generate(websocket: WebSocket):
             if payload:
                 event["payload"] = payload
             await websocket.send_json(event)
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.01)
             
         await send_status("ANALYZING", "in_progress", "Analyzing task requirements...")
         task_analysis = analyzer.analyze(task_id, description)
@@ -342,7 +342,7 @@ async def websocket_evolve(websocket: WebSocket):
         
         async for event in evolution_orchestrator.evolve(task_id, description, budget):
             await websocket.send_json(event)
-            await asyncio.sleep(0.1) # Small sleep to yield to event loop
+            await asyncio.sleep(0.01) # Small sleep to yield to event loop
             
     except WebSocketDisconnect:
         print("WebSocket client disconnected")
@@ -369,7 +369,7 @@ async def websocket_demo(websocket: WebSocket):
             if "payload" in event and isinstance(event["payload"], dict):
                 event["payload"]["demo_mode"] = True
             await websocket.send_json(event)
-            await asyncio.sleep(0.1) # Small sleep to yield to event loop
+            await asyncio.sleep(0.01) # Small sleep to yield to event loop
             
     except WebSocketDisconnect:
         print("WebSocket client disconnected")
